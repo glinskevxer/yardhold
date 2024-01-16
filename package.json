@@ -1,0 +1,28 @@
+{
+  "name": "spurtally",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Demurrage, detention and car hire accounting for private industry track",
+  "type": "module",
+  "engines": {
+    "node": ">=18.18"
+  },
+  "bin": {
+    "spurtally": "./bin/spurtally.js"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "commander": "11.1.0"
+  },
+  "devDependencies": {
+    "eslint": "8.56.0",
+    "prettier": "3.2.4",
+    "vitest": "1.2.2"
+  }
+}
