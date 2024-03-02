@@ -5,6 +5,7 @@ import {
   compareDates,
   dayOfWeek,
   daysBetween,
+  dateRange,
   daysInMonth,
   eachDay,
   endOfMonth,
@@ -17,6 +18,8 @@ import {
   minDate,
   parseCivilDate,
   periodKey,
+  rangeContains,
+  rangeLengthDays,
   startOfMonth,
   toEpochDay,
 } from '../../src/time/civil.js';
@@ -143,5 +146,34 @@ describe('eachDay', () => {
 
   it('is empty when the range runs backwards', () => {
     expect(eachDay(civilDate(2024, 3, 4), civilDate(2024, 3, 1))).toEqual([]);
+  });
+});
+
+describe('dateRange', () => {
+  it('reads both ends off text', () => {
+    const range = dateRange('2024-03-01', '2024-03-04');
+    expect(formatCivilDate(range.from)).toBe('2024-03-01');
+    expect(formatCivilDate(range.to)).toBe('2024-03-04');
+  });
+
+  it('treats a single day as a range of one', () => {
+    const range = dateRange('2024-03-01');
+    expect(rangeLengthDays(range)).toBe(1);
+  });
+
+  it('measures the length inclusively', () => {
+    expect(rangeLengthDays(dateRange('2024-03-01', '2024-03-04'))).toBe(4);
+  });
+
+  it('refuses a backwards range', () => {
+    expect(() => dateRange('2024-03-04', '2024-03-01')).toThrow(ValidationError);
+  });
+
+  it('answers containment on both ends', () => {
+    const range = dateRange('2024-03-01', '2024-03-04');
+    expect(rangeContains(range, civilDate(2024, 3, 1))).toBe(true);
+    expect(rangeContains(range, civilDate(2024, 3, 4))).toBe(true);
+    expect(rangeContains(range, civilDate(2024, 2, 29))).toBe(false);
+    expect(rangeContains(range, civilDate(2024, 3, 5))).toBe(false);
   });
 });

@@ -138,3 +138,24 @@ export function eachDay(from, to) {
   }
   return days;
 }
+
+/**
+ * Read a closed date range off a record. The two ends arrive as text on every
+ * feed we take, and every caller was writing the same three lines.
+ */
+export function dateRange(fromText, toText = fromText) {
+  const from = parseCivilDate(fromText);
+  const to = parseCivilDate(toText);
+  if (compareDates(from, to) > 0) {
+    throw new ValidationError('a date range cannot end before it starts', { fromText, toText });
+  }
+  return { from, to };
+}
+
+export function rangeLengthDays(range) {
+  return daysBetween(range.from, range.to) + 1;
+}
+
+export function rangeContains(range, date) {
+  return compareDates(range.from, date) <= 0 && compareDates(date, range.to) <= 0;
+}

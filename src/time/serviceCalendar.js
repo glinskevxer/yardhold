@@ -4,9 +4,9 @@ import {
   addDays,
   compareDates,
   dayOfWeek,
+  eachDay,
   formatCivilDate,
   parseCivilDate,
-  toEpochDay,
 } from './civil.js';
 import { STANDARD_HOLIDAYS, holidaySet, isHoliday } from './holidays.js';
 
@@ -53,12 +53,7 @@ function expandClosure(closure) {
   if (compareDates(from, to) > 0) {
     throw new ValidationError('a closure cannot end before it starts', { closure });
   }
-  const keys = [];
-  const last = toEpochDay(to);
-  for (let cursor = toEpochDay(from); cursor <= last; cursor += 1) {
-    keys.push(formatCivilDate(addDays(from, cursor - toEpochDay(from))));
-  }
-  return keys;
+  return eachDay(from, to).map(formatCivilDate);
 }
 
 export function isServiceWeekday(calendar, date) {
@@ -108,14 +103,7 @@ export function countServiceDays(calendar, from, to) {
   if (compareDates(from, to) > 0) {
     return 0;
   }
-  let count = 0;
-  const last = toEpochDay(to);
-  for (let cursor = toEpochDay(from); cursor <= last; cursor += 1) {
-    if (isServiceDay(calendar, addDays(from, cursor - toEpochDay(from)))) {
-      count += 1;
-    }
-  }
-  return count;
+  return eachDay(from, to).filter((day) => isServiceDay(calendar, day)).length;
 }
 
 export function addServiceDays(calendar, date, count) {

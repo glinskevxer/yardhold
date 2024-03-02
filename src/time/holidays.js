@@ -1,6 +1,6 @@
 import { ValidationError } from '../core/errors.js';
 import { requireInteger, requireOneOf, requireString } from '../core/guards.js';
-import { civilDate, dayOfWeek, daysInMonth, formatCivilDate, toEpochDay } from './civil.js';
+import { addDays, civilDate, dayOfWeek, daysInMonth, formatCivilDate } from './civil.js';
 
 /**
  * Holiday rules. A tariff that excludes holidays from free time has to agree
@@ -43,40 +43,20 @@ function observed(date, observance) {
   }
   if (observance === OBSERVANCE.FOLLOWING_MONDAY) {
     if (weekday === 6) {
-      return civilDateFromEpoch(toEpochDay(date) + 2);
+      return addDays(date, 2);
     }
     if (weekday === 0) {
-      return civilDateFromEpoch(toEpochDay(date) + 1);
+      return addDays(date, 1);
     }
     return date;
   }
   if (weekday === 6) {
-    return civilDateFromEpoch(toEpochDay(date) - 1);
+    return addDays(date, -1);
   }
   if (weekday === 0) {
-    return civilDateFromEpoch(toEpochDay(date) + 1);
+    return addDays(date, 1);
   }
   return date;
-}
-
-function civilDateFromEpoch(epochDay) {
-  const shifted = epochDay + 719468;
-  const era = Math.floor(shifted / 146097);
-  const dayOfEra = shifted - era * 146097;
-  const yearOfEra = Math.floor(
-    (dayOfEra -
-      Math.floor(dayOfEra / 1460) +
-      Math.floor(dayOfEra / 36524) -
-      Math.floor(dayOfEra / 146096)) /
-      365
-  );
-  const year = yearOfEra + era * 400;
-  const dayOfYear =
-    dayOfEra - (365 * yearOfEra + Math.floor(yearOfEra / 4) - Math.floor(yearOfEra / 100));
-  const monthTerm = Math.floor((5 * dayOfYear + 2) / 153);
-  const day = dayOfYear - Math.floor((153 * monthTerm + 2) / 5) + 1;
-  const month = monthTerm < 10 ? monthTerm + 3 : monthTerm - 9;
-  return civilDate(month <= 2 ? year + 1 : year, month, day);
 }
 
 export function resolveHoliday(rule, year) {
