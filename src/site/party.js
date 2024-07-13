@@ -1,4 +1,5 @@
-import { ConflictError, NotFoundError, ValidationError } from '../core/errors.js';
+import { ValidationError } from '../core/errors.js';
+import { keyedBook } from '../core/keyedBook.js';
 import {
   optional,
   requireArray,
@@ -92,40 +93,26 @@ export function billTo(record, partyBook) {
 }
 
 export function partyBook(parties = []) {
-  const byId = new Map();
-  for (const entry of parties) {
-    const built = entry.role && entry.noticeMethod ? entry : party(entry);
-    if (byId.has(built.id)) {
-      throw new ConflictError('that party id is already in the book', { id: built.id });
-    }
-    byId.set(built.id, built);
-  }
+  const book = keyedBook({
+    label: 'party',
+    records: parties,
+    keyOf: (record) => record.id,
+    build: (record) => (record.noticeMethod && record.responsibleFor ? record : party(record)),
+    normalizeKey: (id) => requireString(id, 'id').trim().toUpperCase(),
+  });
   return {
     get size() {
-      return byId.size;
+      return book.size;
     },
-    has(id) {
-      return byId.has(requireString(id, 'id').trim().toUpperCase());
-    },
-    get(id) {
-      const key = requireString(id, 'id').trim().toUpperCase();
-      const found = byId.get(key);
-      if (!found) {
-        throw new NotFoundError('party', key);
-      }
-      return found;
-    },
-    find(id) {
-      return byId.get(requireString(id, 'id').trim().toUpperCase());
-    },
-    all() {
-      return [...byId.values()].sort((a, b) => (a.id < b.id ? -1 : 1));
-    },
+    has: book.has,
+    get: book.get,
+    find: book.find,
+    all: book.all,
     active() {
-      return [...byId.values()].filter((entry) => entry.active);
+      return book.filter((entry) => entry.active);
     },
     onAverageAgreement() {
-      return [...byId.values()].filter(isOnAverageAgreement);
+      return book.filter(isOnAverageAgreement);
     },
   };
 }

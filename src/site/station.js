@@ -1,4 +1,5 @@
 import { ValidationError } from '../core/errors.js';
+import { keyedBook } from '../core/keyedBook.js';
 import { requireArray, requireInteger, requireString } from '../core/guards.js';
 
 /**
@@ -47,34 +48,27 @@ export function isWithinSwitchingLimits(record, place) {
 }
 
 export function stationBook(stations = []) {
-  const bySplc = new Map();
-  for (const record of stations) {
-    const built = record.splc && record.offsetMinutes !== undefined ? record : station(record);
-    if (bySplc.has(built.splc)) {
-      throw new ValidationError('that SPLC is already in the book', { splc: built.splc });
-    }
-    bySplc.set(built.splc, built);
-  }
+  const book = keyedBook({
+    label: 'station',
+    records: stations,
+    keyOf: (record) => record.splc,
+    build: (record) => (record.offsetMinutes === undefined ? station(record) : record),
+    normalizeKey: (splc) => requireString(splc, 'splc'),
+  });
   return {
     get size() {
-      return bySplc.size;
+      return book.size;
     },
-    has(splc) {
-      return bySplc.has(splc);
-    },
-    find(splc) {
-      return bySplc.get(splc);
-    },
-    all() {
-      return [...bySplc.values()].sort((a, b) => (a.splc < b.splc ? -1 : 1));
-    },
+    has: book.has,
+    find: book.find,
+    all: book.all,
     ofCarrier(carrier) {
       const wanted = requireString(carrier, 'carrier').toUpperCase();
-      return [...bySplc.values()].filter((record) => record.carrier === wanted);
+      return book.filter((record) => record.carrier === wanted);
     },
     byName(name) {
       const wanted = requireString(name, 'name').trim().toUpperCase();
-      return [...bySplc.values()].filter((record) => record.name === wanted);
+      return book.filter((record) => record.name === wanted);
     },
   };
 }

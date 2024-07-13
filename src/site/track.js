@@ -1,4 +1,5 @@
-import { ConflictError, NotFoundError, ValidationError } from '../core/errors.js';
+import { ValidationError } from '../core/errors.js';
+import { keyedBook } from '../core/keyedBook.js';
 import { requireArray, requireInteger, requireOneOf, requireString } from '../core/guards.js';
 
 /**
@@ -76,46 +77,32 @@ export function hasSpot(record, spot) {
 }
 
 export function trackBook(tracks = []) {
-  const byId = new Map();
-  for (const entry of tracks) {
-    const built = entry.role && entry.capacityCars ? entry : track(entry);
-    if (byId.has(built.id)) {
-      throw new ConflictError('that track id is already in the book', { id: built.id });
-    }
-    byId.set(built.id, built);
-  }
+  const book = keyedBook({
+    label: 'track',
+    records: tracks,
+    keyOf: (record) => record.id,
+    build: (record) => (record.capacityCars !== undefined && record.spots ? record : track(record)),
+  });
   return {
     get size() {
-      return byId.size;
+      return book.size;
     },
-    has(id) {
-      return byId.has(id);
-    },
-    get(id) {
-      const found = byId.get(requireString(id, 'id'));
-      if (!found) {
-        throw new NotFoundError('track', id);
-      }
-      return found;
-    },
-    find(id) {
-      return byId.get(id);
-    },
-    all() {
-      return [...byId.values()].sort((a, b) => (a.id < b.id ? -1 : 1));
-    },
+    has: book.has,
+    get: book.get,
+    find: book.find,
+    all: book.all,
     atStation(splc) {
-      return [...byId.values()].filter((entry) => entry.splc === splc);
+      return book.filter((entry) => entry.splc === splc);
     },
     ofRole(role) {
       requireOneOf(role, ROLES, 'role');
-      return [...byId.values()].filter((entry) => entry.role === role);
+      return book.filter((entry) => entry.role === role);
     },
     forConsignee(consigneeId) {
-      return [...byId.values()].filter((entry) => entry.consigneeId === consigneeId);
+      return book.filter((entry) => entry.consigneeId === consigneeId);
     },
     totalCapacity(splc) {
-      return [...byId.values()]
+      return book
         .filter((entry) => splc === undefined || entry.splc === splc)
         .reduce((sum, entry) => sum + entry.capacityCars, 0);
     },
