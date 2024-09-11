@@ -24,15 +24,9 @@ export const LOAD_STATE = Object.freeze({
 
 const STATES = Object.values(LOAD_STATE);
 
-export const DEFAULT_FREE_DAYS = Object.freeze({
-  [LOAD_STATE.LOADED]: 2,
-  [LOAD_STATE.EMPTY]: 0,
-});
-
 export function storageFreeDays(page, loadState) {
   requireOneOf(loadState, STATES, 'loadState');
-  const table = page.storageFreeDays ?? DEFAULT_FREE_DAYS;
-  return table[loadState] ?? 0;
+  return page.storageFreeDays[loadState] ?? 0;
 }
 
 export function assessStorage({

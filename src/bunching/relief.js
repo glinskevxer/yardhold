@@ -15,9 +15,7 @@ import { groupsByDay } from './grouping.js';
  * and each one is reading the output of the other.
  */
 
-export const DEFAULT_CAP_DAYS = 5;
-
-export function reliefForGroup(matches, schedule, { capDays = DEFAULT_CAP_DAYS } = {}) {
+export function reliefForGroup(matches, schedule, { capDays } = {}) {
   const day = matches[0].placedOn;
   const ordered = schedule.carsOrderedOn(matches[0].consigneeId, day);
   const oversupplied = matches.length > ordered;
@@ -39,7 +37,7 @@ export function bunchingRelief(matches, { page, schedule, capDays } = {}) {
   if (!page.bunchingRelief) {
     return matches.map((match) => ({ ...match, extraFreeDays: 0, why: 'page grants no relief' }));
   }
-  const cap = capDays ?? page.bunchingCapDays ?? DEFAULT_CAP_DAYS;
+  const cap = capDays ?? page.bunchingCapDays;
   const out = [];
   for (const group of groupsByDay(matches).values()) {
     out.push(...reliefForGroup(group, schedule, { capDays: cap }));

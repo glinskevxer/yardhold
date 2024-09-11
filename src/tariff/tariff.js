@@ -20,6 +20,10 @@ import { LADDER_RESET, rateLadder } from './rateLadder.js';
  */
 
 const BASES = Object.values(COUNT_BASIS);
+
+/** What the public pages allow when they say nothing. */
+export const DEFAULT_BUNCHING_CAP_DAYS = 5;
+export const DEFAULT_STORAGE_FREE_DAYS = Object.freeze({ loaded: 2, empty: 0 });
 const DAY_KINDS = Object.values(DAY_KIND);
 
 export function tariff({
@@ -36,8 +40,10 @@ export function tariff({
   notificationRequired = true,
   noticeGraceMinutes = 0,
   bunchingRelief = false,
+  bunchingCapDays = DEFAULT_BUNCHING_CAP_DAYS,
   minimumCharge = '0.00',
   storageLadder,
+  storageFreeDays = DEFAULT_STORAGE_FREE_DAYS,
   averageAgreementAllowed = false,
 } = {}) {
   requireString(id, 'id');
@@ -79,6 +85,11 @@ export function tariff({
     notificationRequired: notificationRequired === true,
     noticeGraceMinutes,
     bunchingRelief: bunchingRelief === true,
+    bunchingCapDays: requireInteger(bunchingCapDays, 'bunchingCapDays', { min: 0, max: 30 }),
+    storageFreeDays: Object.freeze({
+      loaded: requireInteger(storageFreeDays.loaded, 'storageFreeDays.loaded', { min: 0, max: 30 }),
+      empty: requireInteger(storageFreeDays.empty, 'storageFreeDays.empty', { min: 0, max: 30 }),
+    }),
     minimumCharge: parseMoney(String(minimumCharge)),
     averageAgreementAllowed: averageAgreementAllowed === true,
   });

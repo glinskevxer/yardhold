@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DEFAULT_CAP_DAYS,
   bunchingRelief,
   extraFreeDaysFor,
   relievedCars,
@@ -8,7 +7,7 @@ import {
 } from '../../src/bunching/relief.js';
 import { matchPlacements } from '../../src/bunching/grouping.js';
 import { orderSchedule } from '../../src/bunching/orderSchedule.js';
-import { tariff } from '../../src/tariff/tariff.js';
+import { DEFAULT_BUNCHING_CAP_DAYS, tariff } from '../../src/tariff/tariff.js';
 import { ValidationError } from '../../src/core/errors.js';
 
 const schedule = orderSchedule([
@@ -107,7 +106,23 @@ describe('the cap', () => {
       longSchedule
     );
     const relieved = bunchingRelief(matches, { page: relieving, schedule: longSchedule });
-    expect(extraFreeDaysFor(relieved, 'A')).toBe(DEFAULT_CAP_DAYS);
+    expect(extraFreeDaysFor(relieved, 'A')).toBe(DEFAULT_BUNCHING_CAP_DAYS);
+  });
+
+  it('takes a cap off the page', () => {
+    const tight = tariff({
+      id: 'DEM-4002',
+      carrier: 'BNSF',
+      bunchingRelief: true,
+      bunchingCapDays: 3,
+      ladder,
+    });
+    const matches = matchPlacements(
+      [placed('A', '2024-03-20'), placed('B', '2024-03-20')],
+      longSchedule
+    );
+    const relieved = bunchingRelief(matches, { page: tight, schedule: longSchedule });
+    expect(extraFreeDaysFor(relieved, 'A')).toBe(3);
   });
 
   it('takes a cap from the call', () => {

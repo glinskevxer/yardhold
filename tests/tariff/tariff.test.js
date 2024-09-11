@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DEFAULT_BUNCHING_CAP_DAYS,
   DEFAULT_SERVICES,
+  DEFAULT_STORAGE_FREE_DAYS,
   chargeableUnitOptions,
   countsInWholeDays,
   describeTariff,
@@ -153,5 +155,47 @@ describe('describeTariff', () => {
 
   it('ships the two services a page normally covers', () => {
     expect(DEFAULT_SERVICES).toEqual([SERVICE.LOADING, SERVICE.UNLOADING]);
+  });
+});
+
+describe('the relief allowances the page carries', () => {
+  it('caps bunching relief at the public figure by default', () => {
+    expect(tariff(base).bunchingCapDays).toBe(DEFAULT_BUNCHING_CAP_DAYS);
+  });
+
+  it('takes a cap of its own', () => {
+    expect(tariff({ ...base, bunchingCapDays: 2 }).bunchingCapDays).toBe(2);
+  });
+
+  it('allows a page that gives no bunching relief at all', () => {
+    expect(tariff({ ...base, bunchingCapDays: 0 }).bunchingCapDays).toBe(0);
+  });
+
+  it('refuses a cap beyond a month', () => {
+    expect(() => tariff({ ...base, bunchingCapDays: 31 })).toThrow(ValidationError);
+    expect(() => tariff({ ...base, bunchingCapDays: -1 })).toThrow(ValidationError);
+  });
+
+  it('carries the storage free days for both load states', () => {
+    expect(tariff(base).storageFreeDays).toEqual(DEFAULT_STORAGE_FREE_DAYS);
+  });
+
+  it('freezes the storage table', () => {
+    expect(Object.isFrozen(tariff(base).storageFreeDays)).toBe(true);
+  });
+
+  it('takes a storage table of its own', () => {
+    const page = tariff({ ...base, storageFreeDays: { loaded: 5, empty: 1 } });
+    expect(page.storageFreeDays).toEqual({ loaded: 5, empty: 1 });
+  });
+
+  it('refuses a storage table with a missing half', () => {
+    expect(() => tariff({ ...base, storageFreeDays: { loaded: 5 } })).toThrow(ValidationError);
+  });
+
+  it('refuses a storage allowance beyond a month', () => {
+    expect(() => tariff({ ...base, storageFreeDays: { loaded: 60, empty: 0 } })).toThrow(
+      ValidationError
+    );
   });
 });

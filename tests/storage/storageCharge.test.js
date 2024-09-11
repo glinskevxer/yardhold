@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DEFAULT_FREE_DAYS,
   LOAD_STATE,
   assessStorage,
   isEmptyStorage,
@@ -8,7 +7,7 @@ import {
   storageFreeDays,
   storageTotal,
 } from '../../src/storage/storageCharge.js';
-import { tariff } from '../../src/tariff/tariff.js';
+import { DEFAULT_STORAGE_FREE_DAYS, tariff } from '../../src/tariff/tariff.js';
 import { serviceCalendar } from '../../src/time/serviceCalendar.js';
 import { parseInstant } from '../../src/time/instant.js';
 import { period } from '../../src/time/period.js';
@@ -35,13 +34,30 @@ describe('storageFreeDays', () => {
   });
 
   it('takes a table off the page', () => {
-    const custom = { ...page, storageFreeDays: { loaded: 4, empty: 1 } };
+    const custom = tariff({
+      id: 'DEM-4001',
+      carrier: 'BNSF',
+      ladder: [{ fromDay: 1, rate: '150.00' }],
+      storageFreeDays: { loaded: 4, empty: 1 },
+    });
     expect(storageFreeDays(custom, LOAD_STATE.LOADED)).toBe(4);
     expect(storageFreeDays(custom, LOAD_STATE.EMPTY)).toBe(1);
   });
 
   it('ships a default table', () => {
-    expect(DEFAULT_FREE_DAYS.loaded).toBe(2);
+    expect(DEFAULT_STORAGE_FREE_DAYS.loaded).toBe(2);
+    expect(storageFreeDays(page, LOAD_STATE.LOADED)).toBe(2);
+  });
+
+  it('refuses a free day table outside the range', () => {
+    expect(() =>
+      tariff({
+        id: 'X',
+        carrier: 'BNSF',
+        ladder: [{ fromDay: 1, rate: '1.00' }],
+        storageFreeDays: { loaded: 99, empty: 0 },
+      })
+    ).toThrow(ValidationError);
   });
 
   it('refuses a load state it does not know', () => {
