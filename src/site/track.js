@@ -81,7 +81,7 @@ export function trackBook(tracks = []) {
     label: 'track',
     records: tracks,
     keyOf: (record) => record.id,
-    build: (record) => (record.capacityCars !== undefined && record.spots ? record : track(record)),
+    build: (record) => (Object.isFrozen(record) && record.spots ? record : track(record)),
   });
   return {
     get size() {

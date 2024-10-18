@@ -97,7 +97,7 @@ export function partyBook(parties = []) {
     label: 'party',
     records: parties,
     keyOf: (record) => record.id,
-    build: (record) => (record.noticeMethod && record.responsibleFor ? record : party(record)),
+    build: (record) => (Object.isFrozen(record) && record.responsibleFor ? record : party(record)),
     normalizeKey: (id) => requireString(id, 'id').trim().toUpperCase(),
   });
   return {

@@ -52,7 +52,7 @@ export function stationBook(stations = []) {
     label: 'station',
     records: stations,
     keyOf: (record) => record.splc,
-    build: (record) => (record.offsetMinutes === undefined ? station(record) : record),
+    build: (record) => (Object.isFrozen(record) && record.calendarId ? record : station(record)),
     normalizeKey: (splc) => requireString(splc, 'splc'),
   });
   return {
