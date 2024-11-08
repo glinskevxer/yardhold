@@ -28,7 +28,7 @@ export function tariffFiling({
   consigneeId,
   contractId,
 } = {}) {
-  const built = page && page.ladder ? page : tariff(page);
+  const built = Object.isFrozen(page) && page.freeTime ? page : tariff(page);
   const from = parseCivilDate(requireString(effectiveFrom, 'effectiveFrom'));
   const to = effectiveTo === undefined ? undefined : parseCivilDate(effectiveTo);
   if (to !== undefined && compareDates(from, to) > 0) {

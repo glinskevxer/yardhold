@@ -57,7 +57,7 @@ export function hireRate({
 export function hireBook(rates = []) {
   const byKind = new Map();
   for (const entry of rates) {
-    const built = entry.basis && entry.hourlyRate ? entry : hireRate(entry);
+    const built = Object.isFrozen(entry) && entry.basis ? entry : hireRate(entry);
     byKind.set(built.carKind, built);
   }
   return {

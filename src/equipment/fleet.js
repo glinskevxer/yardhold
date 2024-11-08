@@ -15,7 +15,7 @@ export function fleet(records = []) {
   const history = new Map();
   const register = {
     add(record) {
-      const built = record.id && record.designation && record.kind ? record : car(record);
+      const built = Object.isFrozen(record) && record.kind ? record : car(record);
       if (byId.has(built.id)) {
         throw new ConflictError('that car is already registered', { id: built.id });
       }
@@ -24,7 +24,7 @@ export function fleet(records = []) {
       return built;
     },
     replace(record) {
-      const built = record.kind ? record : car(record);
+      const built = Object.isFrozen(record) && record.kind ? record : car(record);
       if (!byId.has(built.id)) {
         throw new NotFoundError('car', built.id);
       }
@@ -33,7 +33,7 @@ export function fleet(records = []) {
       return built;
     },
     upsert(record) {
-      const built = record.kind ? record : car(record);
+      const built = Object.isFrozen(record) && record.kind ? record : car(record);
       return byId.has(built.id) ? register.replace(built) : register.add(built);
     },
     has(id) {
