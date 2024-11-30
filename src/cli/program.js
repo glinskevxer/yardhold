@@ -1,0 +1,79 @@
+import { Command } from 'commander';
+import { runAssess } from './commands/assess.js';
+import { runInvoice } from './commands/invoice.js';
+import { runExplain } from './commands/explain.js';
+import { reportError } from './context.js';
+
+export const VERSION = '0.6.0';
+
+/**
+ * The command line.
+ *
+ * Nothing here does any work. Each subcommand gathers its options, hands them
+ * to a run function that knows nothing about the terminal, and prints what
+ * comes back. Keeping the boundary that hard is what lets every command be
+ * tested without a shell.
+ */
+
+function shared(command) {
+  return command
+    .requiredOption('-c, --config <path>', 'configuration document')
+    .requiredOption('-e, --events <path>', 'car event feed as CSV')
+    .requiredOption('-p, --period <yyyymm>', 'billing period')
+    .requiredOption('-r, --carrier <mark>', 'serving carrier')
+    .option('-o, --output <format>', 'table, csv or json', 'table');
+}
+
+export function buildProgram(deps = {}) {
+  const write = deps.write ?? ((text) => console.log(text));
+  const fail = deps.fail ?? ((text) => console.error(text));
+  const exit = deps.exit ?? (() => {});
+
+  function guard(run) {
+    return (options) => {
+      try {
+        write(run(options, deps).text);
+      } catch (error) {
+        const reported = reportError(error);
+        fail(reported.message);
+        exit(reported.code);
+      }
+    };
+  }
+
+  const program = new Command();
+  program
+    .name('spurtally')
+    .description('demurrage, storage and car hire accounting for a private industry track')
+    .version(VERSION)
+    .exitOverride();
+
+  shared(program.command('assess').description('assess every car for a period'))
+    .option('-d, --detail', 'one row per chargeable day')
+    .action(guard(runAssess));
+
+  shared(program.command('invoice').description('cut an invoice per consignee'))
+    .requiredOption('-i, --issued-on <date>', 'invoice date')
+    .action(guard(runInvoice));
+
+  shared(program.command('explain').description('explain how one car was counted'))
+    .requiredOption('-k, --car <id>', 'car initial and number')
+    .action(guard(runExplain));
+
+  return program;
+}
+
+export async function main(argv, deps = {}) {
+  const program = buildProgram(deps);
+  try {
+    await program.parseAsync(argv, { from: 'user' });
+    return 0;
+  } catch (error) {
+    if (error.exitCode !== undefined) {
+      return error.exitCode;
+    }
+    const reported = reportError(error);
+    (deps.fail ?? ((text) => console.error(text)))(reported.message);
+    return reported.code;
+  }
+}

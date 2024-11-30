@@ -1,2 +1,5 @@
 #!/usr/bin/env node
-console.log('spurtally 0.1.0');
+import { main } from '../src/cli/program.js';
+
+const code = await main(process.argv.slice(2));
+process.exitCode = code;
