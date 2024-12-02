@@ -45,7 +45,16 @@ export function assessMonth(world, events, { period, carrier, service = SERVICE.
   const skipped = [];
   for (const [carId, stream] of groupByCar(events)) {
     const inPeriod = stream.filter((record) => record.at < bounds.to);
-    const placement = inPeriod.find((record) => record.trackId !== undefined);
+    /**
+     * A car held on the carrier's own track and then spotted belongs to the
+     * consignee it was finally spotted for, not to the hold track it waited on.
+     * Reading the first track with a track id put every constructively placed
+     * car on nobody's invoice.
+     */
+    const consigned = inPeriod.find(
+      (record) => record.trackId !== undefined && consigneeOf(world, record.trackId) !== undefined
+    );
+    const placement = consigned ?? inPeriod.find((record) => record.trackId !== undefined);
     const splc = stationOf(world, placement?.trackId);
     const consigneeId = consigneeOf(world, placement?.trackId);
     if (splc === undefined) {

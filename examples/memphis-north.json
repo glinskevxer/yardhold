@@ -1,0 +1,131 @@
+{
+  "settings": {
+    "years": [2024, 2025],
+    "offsetMinutes": -360,
+    "termsDays": 15,
+    "taxRateBasisPoints": 0
+  },
+  "stations": [
+    { "splc": "412300", "name": "Memphis North", "carrier": "BNSF" },
+    { "splc": "412400", "name": "Collierville", "carrier": "BNSF" }
+  ],
+  "tracks": [
+    {
+      "id": "IT-9",
+      "splc": "412300",
+      "name": "Delta Chemical lead",
+      "capacityCars": 8,
+      "spots": ["A", "B", "C"],
+      "consigneeId": "DELTA"
+    },
+    {
+      "id": "IT-14",
+      "splc": "412300",
+      "name": "Yazoo Feed house track",
+      "capacityCars": 5,
+      "consigneeId": "YAZOO"
+    },
+    {
+      "id": "HT-1",
+      "splc": "412300",
+      "name": "North hold",
+      "role": "hold",
+      "capacityCars": 30
+    }
+  ],
+  "parties": [
+    {
+      "id": "DELTA",
+      "name": "Delta Chemical Company",
+      "noticeMethod": "edi",
+      "noticeAddress": "rail@deltachem.example",
+      "paymentTermsDays": 15,
+      "averageAgreementId": "AVG-2024-DELTA"
+    },
+    {
+      "id": "YAZOO",
+      "name": "Yazoo Feed and Grain",
+      "noticeMethod": "email",
+      "noticeAddress": "traffic@yazoofeed.example",
+      "paymentTermsDays": 30
+    }
+  ],
+  "cars": [
+    { "id": "BNSF 400123", "designation": "XM" },
+    { "id": "BNSF 400188", "designation": "XM" },
+    { "id": "UP 512004", "designation": "LO" },
+    { "id": "GATX 77", "designation": "T", "ownerName": "Delta Chemical Company" }
+  ],
+  "agreements": [
+    {
+      "id": "AVG-2024-DELTA",
+      "consigneeId": "DELTA",
+      "splc": "412300",
+      "from": "2024-01-01",
+      "to": "2024-12-31",
+      "creditBasis": "free-day",
+      "offsetRatio": 1,
+      "creditCapPerCar": 4,
+      "carryOver": true
+    }
+  ],
+  "orders": [
+    { "consigneeId": "YAZOO", "splc": "412300", "wantedOn": "2024-03-04", "cars": 1 },
+    { "consigneeId": "YAZOO", "splc": "412300", "wantedOn": "2024-03-05", "cars": 1 }
+  ],
+  "exclusions": [
+    {
+      "kind": "weather",
+      "from": "2024-03-06T00:00",
+      "to": "2024-03-07T00:00",
+      "splc": "412300",
+      "evidence": "carrier-bulletin",
+      "reference": "BNSF SA-2024-113"
+    }
+  ],
+  "switchRates": [
+    { "kind": "intra-plant", "rate": "340.00" },
+    { "kind": "reciprocal", "rate": "425.00" }
+  ],
+  "hireRates": [{ "carKind": "boxcar", "hourlyRate": "0.7500", "mileageRate": "0.0425" }],
+  "tariffs": [
+    {
+      "effectiveFrom": "2024-01-01",
+      "page": {
+        "id": "DEM-4000",
+        "carrier": "BNSF",
+        "title": "Demurrage and storage",
+        "notificationRequired": false,
+        "bunchingRelief": true,
+        "averageAgreementAllowed": true,
+        "freeTime": [
+          { "service": "unloading", "days": 1 },
+          { "service": "loading", "days": 1 },
+          { "service": "unloading", "days": 2, "carKind": "tank" }
+        ],
+        "ladder": [
+          { "fromDay": 1, "rate": "150.00", "toDay": 2 },
+          { "fromDay": 3, "rate": "225.00", "toDay": 5 },
+          { "fromDay": 6, "rate": "300.00" }
+        ],
+        "storageLadder": [{ "fromDay": 1, "rate": "80.00" }]
+      }
+    },
+    {
+      "effectiveFrom": "2024-01-01",
+      "consigneeId": "DELTA",
+      "page": {
+        "id": "CON-DELTA-2024",
+        "carrier": "BNSF",
+        "title": "Delta Chemical contract rates",
+        "notificationRequired": false,
+        "averageAgreementAllowed": true,
+        "freeTime": [{ "service": "unloading", "days": 2 }],
+        "ladder": [
+          { "fromDay": 1, "rate": "95.00", "toDay": 3 },
+          { "fromDay": 4, "rate": "140.00" }
+        ]
+      }
+    }
+  ]
+}
