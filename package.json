@@ -1,11 +1,11 @@
 {
   "name": "spurtally",
-  "version": "0.1.0",
+  "version": "0.6.0",
   "private": true,
   "description": "Demurrage, detention and car hire accounting for private industry track",
   "type": "module",
   "engines": {
-    "node": ">=18.18"
+    "node": ">=20.11"
   },
   "bin": {
     "spurtally": "./bin/spurtally.js"
@@ -15,14 +15,18 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "smoke": "node bin/spurtally.js assess -c examples/memphis-north.json -e examples/march-2024.csv -p 202403 -r BNSF"
   },
   "dependencies": {
     "commander": "11.1.0"
   },
   "devDependencies": {
-    "eslint": "8.56.0",
-    "prettier": "3.2.4",
-    "vitest": "1.2.2"
+    "@vitest/coverage-v8": "2.1.9",
+    "eslint": "9.20.1",
+    "globals": "15.15.0",
+    "prettier": "3.4.2",
+    "vitest": "2.1.9"
   }
 }
