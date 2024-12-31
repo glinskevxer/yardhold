@@ -66,12 +66,13 @@ describe('buildProgram', () => {
     expect(program.version()).toBe(VERSION);
   });
 
-  it('registers the three commands', () => {
+  it('registers every command', () => {
     const program = buildProgram(harness().deps);
     expect(program.commands.map((command) => command.name()).sort()).toEqual([
       'assess',
       'explain',
       'invoice',
+      'report',
     ]);
   });
 });
@@ -127,6 +128,33 @@ describe('explain', () => {
     expect(rig.out).toEqual([]);
     expect(rig.errs[0]).toMatch(/^not_found:/);
     expect(rig.codes).toEqual([2]);
+  });
+});
+
+describe('report', () => {
+  it('runs the exception report by default', async () => {
+    const rig = harness();
+    await main(['report', ...common], rig.deps);
+    expect(rig.out[0]).toBe('no exceptions');
+  });
+
+  it('runs the month figures when asked', async () => {
+    const rig = harness();
+    await main(['report', ...common, '-t', 'kpi'], rig.deps);
+    expect(rig.out[0]).toContain('chargeable days');
+    expect(rig.out[0]).toContain('gross');
+  });
+
+  it('runs the dwell report when asked', async () => {
+    const rig = harness();
+    await main(['report', ...common, '-t', 'dwell'], rig.deps);
+    expect(rig.out[0]).toContain('plant');
+  });
+
+  it('refuses a report it does not have', async () => {
+    const rig = harness();
+    await main(['report', ...common, '-t', 'weather'], rig.deps);
+    expect(rig.errs[0]).toMatch(/^validation:/);
   });
 });
 

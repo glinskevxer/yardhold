@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import { runAssess } from './commands/assess.js';
 import { runInvoice } from './commands/invoice.js';
 import { runExplain } from './commands/explain.js';
+import { runReport } from './commands/report.js';
 import { reportError } from './context.js';
 
 export const VERSION = '0.6.0';
@@ -59,6 +60,10 @@ export function buildProgram(deps = {}) {
   shared(program.command('explain').description('explain how one car was counted'))
     .requiredOption('-k, --car <id>', 'car initial and number')
     .action(guard(runExplain));
+
+  shared(program.command('report').description('exceptions, month figures or dwell'))
+    .option('-t, --report <kind>', 'exceptions, kpi or dwell', 'exceptions')
+    .action(guard(runReport));
 
   return program;
 }
