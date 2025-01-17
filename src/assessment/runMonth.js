@@ -3,6 +3,7 @@ import { endOfMonth, formatCivilDate, parseCivilDate, startOfMonth } from '../ti
 import { MINUTES_PER_DAY, instantFrom } from '../time/instant.js';
 import { groupByCar } from '../events/ledger.js';
 import { SERVICE } from '../tariff/freeTimeTable.js';
+import { serviceFor } from '../events/waybill.js';
 import { calendarFor } from '../config/loadConfig.js';
 import { assessCar } from './assess.js';
 
@@ -37,7 +38,7 @@ function consigneeOf(world, trackId) {
   return track?.consigneeId;
 }
 
-export function assessMonth(world, events, { period, carrier, service = SERVICE.UNLOADING } = {}) {
+export function assessMonth(world, events, { period, carrier, service } = {}) {
   requireObject(world, 'world');
   requireString(carrier, 'carrier');
   const bounds = periodBounds(period, world.settings.offsetMinutes);
@@ -73,6 +74,17 @@ export function assessMonth(world, events, { period, carrier, service = SERVICE.
       continue;
     }
     const car = world.cars.find(carId);
+    /**
+     * The commodity comes off the waybill in force on the first day of the
+     * period, and with it the service. A car with no waybill falls to the bare
+     * service line, which is what the tariff intends and not a defect.
+     */
+    const bill = world.waybills.onDate(carId, bounds.firstDay);
+    const commodityClass =
+      bill === undefined || bill.commodityCode === undefined
+        ? undefined
+        : world.commodities.classOf(bill.commodityCode);
+    const resolvedService = service ?? (bill === undefined ? SERVICE.UNLOADING : serviceFor(bill));
     assessments.push({
       ...assessCar({
         carId,
@@ -81,11 +93,13 @@ export function assessMonth(world, events, { period, carrier, service = SERVICE.
         calendar: calendarFor(world, splc),
         trackBook: world.tracks,
         exclusions: world.exclusions.forCar({ carId, splc, consigneeId }),
-        query: { service, carKind: car?.kind },
+        query: { service: resolvedService, carKind: car?.kind, commodityClass },
         until: bounds.to,
       }),
       splc,
       consigneeId,
+      commodityClass,
+      service: resolvedService,
       firstEventAt: first?.at,
     });
   }

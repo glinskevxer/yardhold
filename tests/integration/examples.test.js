@@ -35,6 +35,8 @@ describe('the shipped example configuration', () => {
       agreements: 1,
       orders: 2,
       exclusions: 1,
+      commodities: 6,
+      waybills: 2,
     });
   });
 

@@ -127,6 +127,82 @@ describe('cars it cannot place', () => {
   });
 });
 
+describe('the waybill decides the query', () => {
+  const withBills = loadConfig({
+    settings: { years: [2024] },
+    stations: [{ splc: '412300', name: 'Memphis North', carrier: 'BNSF' }],
+    tracks: [
+      { id: 'IT-9', splc: '412300', name: 'Delta lead', capacityCars: 6, consigneeId: 'DELTA' },
+    ],
+    parties: [{ id: 'DELTA', name: 'Delta Chemical', noticeAddress: 'a@b.example' }],
+    cars: [{ id: 'BNSF 400123', designation: 'XM' }],
+    waybills: [
+      {
+        number: 'WB-1',
+        carId: 'BNSF 400123',
+        movement: 'inbound-loaded',
+        billedOn: '2024-03-01',
+        commodityCode: '0113210',
+        netWeightPounds: 190000,
+      },
+    ],
+    tariffs: [
+      {
+        page: {
+          id: 'DEM-4000',
+          carrier: 'BNSF',
+          notificationRequired: false,
+          ladder: [{ fromDay: 1, rate: '150.00' }],
+          freeTime: [
+            { service: SERVICE.UNLOADING, days: 1 },
+            { service: SERVICE.UNLOADING, days: 4, commodityClass: 'GRAIN' },
+          ],
+        },
+        effectiveFrom: '2024-01-01',
+      },
+    ],
+  });
+
+  const events = build([
+    { carId: 'BNSF 400123', code: 'AP', at: '2024-03-04T00:00', trackId: 'IT-9' },
+    { carId: 'BNSF 400123', code: 'REL', at: '2024-03-08T00:00' },
+  ]);
+
+  it('reads the commodity class off the waybill', () => {
+    const result = assessMonth(withBills, events, { period: '202403', carrier: 'BNSF' });
+    expect(result.assessments[0].commodityClass).toBe('GRAIN');
+  });
+
+  it('reads the service off the movement', () => {
+    const result = assessMonth(withBills, events, { period: '202403', carrier: 'BNSF' });
+    expect(result.assessments[0].service).toBe('unloading');
+  });
+
+  it('spends the commodity allowance rather than the bare one', () => {
+    const result = assessMonth(withBills, events, { period: '202403', carrier: 'BNSF' });
+    expect(result.assessments[0].chargeableDays).toBe(0);
+  });
+
+  it('falls back to the bare line for a car with no waybill', () => {
+    const bare = build([
+      { carId: 'UP 9', code: 'AP', at: '2024-03-04T00:00', trackId: 'IT-9' },
+      { carId: 'UP 9', code: 'REL', at: '2024-03-08T00:00' },
+    ]);
+    const result = assessMonth(withBills, bare, { period: '202403', carrier: 'BNSF' });
+    expect(result.assessments[0].commodityClass).toBeUndefined();
+    expect(result.assessments[0].chargeableDays).toBe(3);
+  });
+
+  it('still takes an explicit service when the caller names one', () => {
+    const result = assessMonth(withBills, events, {
+      period: '202403',
+      carrier: 'BNSF',
+      service: SERVICE.LOADING,
+    });
+    expect(result.assessments[0].service).toBe('loading');
+  });
+});
+
 describe('the period cut off', () => {
   it('bills a car still standing at month end to the cut off', () => {
     const events = build([

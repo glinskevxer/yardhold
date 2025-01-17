@@ -10,6 +10,8 @@ import { averageAgreement } from '../average/agreement.js';
 import { orderSchedule } from '../bunching/orderSchedule.js';
 import { exclusionRegistry } from '../exclusions/registry.js';
 import { hireBook } from '../storage/perDiem.js';
+import { STANDARD_COMMODITIES, commodityBook } from '../tariff/commodity.js';
+import { waybillBook } from '../events/waybill.js';
 import { checkDocument, settingsOf } from './schema.js';
 
 /**
@@ -59,6 +61,8 @@ export function loadConfig(document) {
     orders: orderSchedule(document.orders ?? []),
     exclusions: exclusionRegistry(document.exclusions ?? []),
     hireRates: hireBook(document.hireRates ?? []),
+    commodities: commodityBook(document.commodities ?? STANDARD_COMMODITIES),
+    waybills: waybillBook(document.waybills ?? []),
   });
 }
 
@@ -97,5 +101,7 @@ export function worldSummary(world) {
     agreements: world.agreements.size,
     orders: world.orders.size,
     exclusions: world.exclusions.size,
+    commodities: world.commodities.size,
+    waybills: world.waybills.size,
   };
 }

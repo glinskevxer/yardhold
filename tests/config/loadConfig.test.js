@@ -59,7 +59,39 @@ describe('loadConfig', () => {
       agreements: 1,
       orders: 1,
       exclusions: 0,
+      commodities: 6,
+      waybills: 0,
     });
+  });
+
+  it('falls back to the standard commodity book when none is given', () => {
+    expect(world.commodities.classOf('0113210')).toBe('GRAIN');
+  });
+
+  it('takes a commodity book of its own', () => {
+    const custom = loadConfig({
+      ...document,
+      commodities: [{ code: '0113210', name: 'corn', commodityClass: 'FEED' }],
+    });
+    expect(custom.commodities.size).toBe(1);
+    expect(custom.commodities.classOf('0113210')).toBe('FEED');
+  });
+
+  it('indexes the waybills by car', () => {
+    const withBills = loadConfig({
+      ...document,
+      waybills: [
+        {
+          number: 'WB-1',
+          carId: 'BNSF 400123',
+          movement: 'inbound-loaded',
+          billedOn: '2024-03-01',
+          commodityCode: '0113210',
+          netWeightPounds: 190000,
+        },
+      ],
+    });
+    expect(withBills.waybills.forCar('BNSF 400123')).toHaveLength(1);
   });
 
   it('carries the settings through', () => {

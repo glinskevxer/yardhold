@@ -6,8 +6,16 @@
     "taxRateBasisPoints": 0
   },
   "stations": [
-    { "splc": "412300", "name": "Memphis North", "carrier": "BNSF" },
-    { "splc": "412400", "name": "Collierville", "carrier": "BNSF" }
+    {
+      "splc": "412300",
+      "name": "Memphis North",
+      "carrier": "BNSF"
+    },
+    {
+      "splc": "412400",
+      "name": "Collierville",
+      "carrier": "BNSF"
+    }
   ],
   "tracks": [
     {
@@ -51,10 +59,23 @@
     }
   ],
   "cars": [
-    { "id": "BNSF 400123", "designation": "XM" },
-    { "id": "BNSF 400188", "designation": "XM" },
-    { "id": "UP 512004", "designation": "LO" },
-    { "id": "GATX 77", "designation": "T", "ownerName": "Delta Chemical Company" }
+    {
+      "id": "BNSF 400123",
+      "designation": "XM"
+    },
+    {
+      "id": "BNSF 400188",
+      "designation": "XM"
+    },
+    {
+      "id": "UP 512004",
+      "designation": "LO"
+    },
+    {
+      "id": "GATX 77",
+      "designation": "T",
+      "ownerName": "Delta Chemical Company"
+    }
   ],
   "agreements": [
     {
@@ -70,8 +91,18 @@
     }
   ],
   "orders": [
-    { "consigneeId": "YAZOO", "splc": "412300", "wantedOn": "2024-03-04", "cars": 1 },
-    { "consigneeId": "YAZOO", "splc": "412300", "wantedOn": "2024-03-05", "cars": 1 }
+    {
+      "consigneeId": "YAZOO",
+      "splc": "412300",
+      "wantedOn": "2024-03-04",
+      "cars": 1
+    },
+    {
+      "consigneeId": "YAZOO",
+      "splc": "412300",
+      "wantedOn": "2024-03-05",
+      "cars": 1
+    }
   ],
   "exclusions": [
     {
@@ -84,10 +115,22 @@
     }
   ],
   "switchRates": [
-    { "kind": "intra-plant", "rate": "340.00" },
-    { "kind": "reciprocal", "rate": "425.00" }
+    {
+      "kind": "intra-plant",
+      "rate": "340.00"
+    },
+    {
+      "kind": "reciprocal",
+      "rate": "425.00"
+    }
   ],
-  "hireRates": [{ "carKind": "boxcar", "hourlyRate": "0.7500", "mileageRate": "0.0425" }],
+  "hireRates": [
+    {
+      "carKind": "boxcar",
+      "hourlyRate": "0.7500",
+      "mileageRate": "0.0425"
+    }
+  ],
   "tariffs": [
     {
       "effectiveFrom": "2024-01-01",
@@ -99,16 +142,48 @@
         "bunchingRelief": true,
         "averageAgreementAllowed": true,
         "freeTime": [
-          { "service": "unloading", "days": 1 },
-          { "service": "loading", "days": 1 },
-          { "service": "unloading", "days": 2, "carKind": "tank" }
+          {
+            "service": "unloading",
+            "days": 1
+          },
+          {
+            "service": "loading",
+            "days": 1
+          },
+          {
+            "service": "unloading",
+            "days": 2,
+            "carKind": "tank"
+          },
+          {
+            "service": "unloading",
+            "days": 2,
+            "commodityClass": "GRAIN",
+            "dayKind": "service"
+          }
         ],
         "ladder": [
-          { "fromDay": 1, "rate": "150.00", "toDay": 2 },
-          { "fromDay": 3, "rate": "225.00", "toDay": 5 },
-          { "fromDay": 6, "rate": "300.00" }
+          {
+            "fromDay": 1,
+            "rate": "150.00",
+            "toDay": 2
+          },
+          {
+            "fromDay": 3,
+            "rate": "225.00",
+            "toDay": 5
+          },
+          {
+            "fromDay": 6,
+            "rate": "300.00"
+          }
         ],
-        "storageLadder": [{ "fromDay": 1, "rate": "80.00" }]
+        "storageLadder": [
+          {
+            "fromDay": 1,
+            "rate": "80.00"
+          }
+        ]
       }
     },
     {
@@ -120,12 +195,51 @@
         "title": "Delta Chemical contract rates",
         "notificationRequired": false,
         "averageAgreementAllowed": true,
-        "freeTime": [{ "service": "unloading", "days": 2 }],
+        "freeTime": [
+          {
+            "service": "unloading",
+            "days": 2
+          }
+        ],
         "ladder": [
-          { "fromDay": 1, "rate": "95.00", "toDay": 3 },
-          { "fromDay": 4, "rate": "140.00" }
+          {
+            "fromDay": 1,
+            "rate": "95.00",
+            "toDay": 3
+          },
+          {
+            "fromDay": 4,
+            "rate": "140.00"
+          }
         ]
       }
+    }
+  ],
+  "waybills": [
+    {
+      "number": "WB-99012",
+      "carId": "UP 512004",
+      "movement": "inbound-loaded",
+      "billedOn": "2024-03-02",
+      "commodityCode": "0113210",
+      "netWeightPounds": 196400,
+      "originSplc": "389200",
+      "destinationSplc": "412300",
+      "consigneeId": "YAZOO",
+      "route": ["BNSF"]
+    },
+    {
+      "number": "WB-99031",
+      "carId": "GATX 77",
+      "movement": "inbound-loaded",
+      "billedOn": "2024-03-08",
+      "commodityCode": "2812340",
+      "netWeightPounds": 178000,
+      "originSplc": "554100",
+      "destinationSplc": "412300",
+      "consigneeId": "DELTA",
+      "route": ["UP", "BNSF"],
+      "hazmatPlacard": "UN1824"
     }
   ]
 }
