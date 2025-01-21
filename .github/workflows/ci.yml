@@ -1,0 +1,131 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: lint and format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.18.2
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+
+  test:
+    name: test on node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20.18.2', '22.13.1']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  coverage:
+    name: coverage thresholds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.18.2
+          cache: npm
+      - run: npm ci
+      - run: npm run coverage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/lcov.info
+          if-no-files-found: error
+
+  audit:
+    name: audit runtime dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.18.2
+          cache: npm
+      - run: npm ci
+      - run: npm audit --omit=dev --audit-level=moderate
+
+  smoke:
+    name: smoke the worked example
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.18.2
+          cache: npm
+      - run: npm ci --omit=dev
+      - name: assess
+        run: node bin/spurtally.js assess -c examples/memphis-north.json -e examples/march-2024.csv -p 202403 -r BNSF
+      - name: invoice
+        run: node bin/spurtally.js invoice -c examples/memphis-north.json -e examples/march-2024.csv -p 202403 -r BNSF -i 2024-04-05
+      - name: report
+        run: node bin/spurtally.js report -c examples/memphis-north.json -e examples/march-2024.csv -p 202403 -r BNSF -t kpi
+
+  package:
+    name: package contents
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.18.2
+          cache: npm
+      - run: npm ci
+      - name: pack and list
+        run: |
+          npm pack --dry-run --json > /tmp/pack.json
+          node -e "
+            const pack = JSON.parse(require('fs').readFileSync('/tmp/pack.json', 'utf8'))[0];
+            const files = pack.files.map((entry) => entry.path);
+            const missing = ['package.json', 'bin/spurtally.js'].filter((path) => !files.includes(path));
+            if (missing.length > 0) { throw new Error('missing from the package: ' + missing.join(', ')); }
+            if (!files.some((path) => path.startsWith('src/'))) { throw new Error('no sources in the package'); }
+            console.log(files.length + ' files, ' + pack.unpackedSize + ' bytes unpacked');
+          "
+
+  image:
+    name: container image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: spurtally:ci
+      - name: run the help
+        run: docker run --rm spurtally:ci --help
+      - name: assess inside the image
+        run: |
+          docker run --rm spurtally:ci assess \
+            -c /app/examples/memphis-north.json \
+            -e /app/examples/march-2024.csv \
+            -p 202403 -r BNSF
