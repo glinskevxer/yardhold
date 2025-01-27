@@ -10,6 +10,13 @@
   "bin": {
     "spurtally": "./bin/spurtally.js"
   },
+  "files": [
+    "bin/",
+    "src/",
+    "examples/",
+    "README.md",
+    "SECURITY.md"
+  ],
   "scripts": {
     "lint": "eslint .",
     "format": "prettier --write .",
