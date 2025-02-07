@@ -86,3 +86,26 @@ describe('.dockerignore', () => {
     expect(dockerignore).toContain('.git');
   });
 });
+
+describe('the package manifest', () => {
+  it('ships the binary and the sources and nothing else', () => {
+    expect(packageJson.files).toEqual(['bin/', 'src/', 'examples/', 'README.md', 'SECURITY.md']);
+  });
+
+  it('carries exactly one runtime dependency', () => {
+    expect(Object.keys(packageJson.dependencies)).toEqual(['commander']);
+  });
+
+  it('pins every dependency to an exact version', () => {
+    const all = { ...packageJson.dependencies, ...packageJson.devDependencies };
+    for (const [name, version] of Object.entries(all)) {
+      expect(version, name).toMatch(/^\d+\.\d+\.\d+$/);
+    }
+  });
+
+  it('declares the scripts CI calls', () => {
+    for (const script of ['lint', 'format:check', 'test', 'coverage', 'smoke']) {
+      expect(packageJson.scripts[script]).toBeDefined();
+    }
+  });
+});

@@ -5,7 +5,7 @@ import { runExplain } from './commands/explain.js';
 import { runReport } from './commands/report.js';
 import { reportError } from './context.js';
 
-export const VERSION = '0.6.0';
+export const VERSION = '0.7.0';
 
 /**
  * The command line.
@@ -65,7 +65,32 @@ export function buildProgram(deps = {}) {
     .option('-t, --report <kind>', 'exceptions, kpi or dwell', 'exceptions')
     .action(guard(runReport));
 
+  program.addHelpText(
+    'after',
+    [
+      '',
+      'Examples:',
+      '  spurtally assess  -c world.json -e march.csv -p 202403 -r BNSF',
+      '  spurtally assess  -c world.json -e march.csv -p 202403 -r BNSF --detail',
+      '  spurtally invoice -c world.json -e march.csv -p 202403 -r BNSF -i 2024-04-05',
+      '  spurtally explain -c world.json -e march.csv -p 202403 -r BNSF -k "BNSF 400123"',
+      '  spurtally report  -c world.json -e march.csv -p 202403 -r BNSF -t kpi',
+      '',
+      'A period is written YYYYMM and selects the tariff page in force on the day',
+      'each car was placed, not the page in force when the invoice is cut.',
+    ].join('\n')
+  );
+
   return program;
+}
+
+export function commandNames(program) {
+  return program.commands.map((command) => command.name()).sort();
+}
+
+export function optionsOf(program, name) {
+  const command = program.commands.find((entry) => entry.name() === name);
+  return command === undefined ? [] : command.options.map((option) => option.long).sort();
 }
 
 export async function main(argv, deps = {}) {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { VERSION, buildProgram, main } from '../../src/cli/program.js';
+import { VERSION, buildProgram, commandNames, optionsOf } from '../../src/cli/program.js';
+import { main } from '../../src/cli/program.js';
 import { SERVICE } from '../../src/tariff/freeTimeTable.js';
 
 const document = {
@@ -182,5 +183,62 @@ describe('failures', () => {
     const rig = harness();
     const code = await main(['nonesuch'], rig.deps);
     expect(code).not.toBe(0);
+  });
+});
+
+describe('the help', () => {
+  it('lists every command through the helper', () => {
+    expect(commandNames(buildProgram(harness().deps))).toEqual([
+      'assess',
+      'explain',
+      'invoice',
+      'report',
+    ]);
+  });
+
+  it('gives every command the shared options', () => {
+    const program = buildProgram(harness().deps);
+    for (const name of commandNames(program)) {
+      const options = optionsOf(program, name);
+      expect(options).toContain('--config');
+      expect(options).toContain('--events');
+      expect(options).toContain('--period');
+      expect(options).toContain('--carrier');
+      expect(options).toContain('--output');
+    }
+  });
+
+  it('gives invoice its issue date and explain its car', () => {
+    const program = buildProgram(harness().deps);
+    expect(optionsOf(program, 'invoice')).toContain('--issued-on');
+    expect(optionsOf(program, 'explain')).toContain('--car');
+    expect(optionsOf(program, 'assess')).toContain('--detail');
+  });
+
+  it('has nothing to say about a command it does not have', () => {
+    expect(optionsOf(buildProgram(harness().deps), 'nonesuch')).toEqual([]);
+  });
+
+  it('prints worked examples after the option list', () => {
+    const program = buildProgram(harness().deps);
+    let help = '';
+    program.configureOutput({ writeOut: (text) => (help += text) });
+    program.outputHelp();
+    expect(help).toContain('Examples:');
+    expect(help).toContain('spurtally invoice');
+    expect(help).toContain('page in force on the day');
+  });
+});
+
+describe('the version', () => {
+  it('matches the package', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { resolve } = await import('node:path');
+    const packageJson = JSON.parse(readFileSync(resolve(process.cwd(), 'package.json'), 'utf8'));
+    expect(VERSION).toBe(packageJson.version);
+  });
+
+  it('is a plain semantic version', () => {
+    expect(VERSION).toMatch(/^\d+\.\d+\.\d+$/);
   });
 });
