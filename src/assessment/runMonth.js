@@ -5,6 +5,7 @@ import { groupByCar } from '../events/ledger.js';
 import { SERVICE } from '../tariff/freeTimeTable.js';
 import { serviceFor } from '../events/waybill.js';
 import { calendarFor } from '../config/loadConfig.js';
+import { suspensionsFrom } from '../clock/suspension.js';
 import { assessCar } from './assess.js';
 
 /**
@@ -85,6 +86,18 @@ export function assessMonth(world, events, { period, carrier, service } = {}) {
         ? undefined
         : world.commodities.classOf(bill.commodityCode);
     const resolvedService = service ?? (bill === undefined ? SERVICE.UNLOADING : serviceFor(bill));
+    /**
+     * Relief comes from two places and they have to be pooled before the count
+     * runs. Filed bulletins are in the register; bad orders, embargoes and
+     * consignee holds arrive as event pairs and were being dropped on the
+     * floor, which charged the consignee for stretches the carrier had already
+     * admitted to in its own feed.
+     */
+    const suspensions = suspensionsFrom(inPeriod, { until: bounds.to, splc, consigneeId });
+    const relief = [
+      ...world.exclusions.forCar({ carId, splc, consigneeId }),
+      ...suspensions.exclusions,
+    ];
     assessments.push({
       ...assessCar({
         carId,
@@ -92,7 +105,7 @@ export function assessMonth(world, events, { period, carrier, service } = {}) {
         page,
         calendar: calendarFor(world, splc),
         trackBook: world.tracks,
-        exclusions: world.exclusions.forCar({ carId, splc, consigneeId }),
+        exclusions: relief,
         query: { service: resolvedService, carKind: car?.kind, commodityClass },
         until: bounds.to,
       }),
@@ -100,6 +113,8 @@ export function assessMonth(world, events, { period, carrier, service } = {}) {
       consigneeId,
       commodityClass,
       service: resolvedService,
+      suspensions: suspensions.exclusions,
+      unclosedSuspensions: suspensions.unclosed,
       firstEventAt: first?.at,
     });
   }

@@ -203,6 +203,52 @@ describe('the waybill decides the query', () => {
   });
 });
 
+describe('suspensions reported in the feed', () => {
+  const events = build([
+    { carId: 'BNSF 400123', code: 'AP', at: '2024-03-04T00:00', trackId: 'IT-9' },
+    { carId: 'BNSF 400123', code: 'BO', at: '2024-03-05T00:00' },
+    { carId: 'BNSF 400123', code: 'BOR', at: '2024-03-06T00:00' },
+    { carId: 'BNSF 400123', code: 'REL', at: '2024-03-08T00:00' },
+  ]);
+
+  it('turns the pair into relief', () => {
+    const result = assessMonth(world, events, { period: '202403', carrier: 'BNSF' });
+    expect(result.assessments[0].suspensions).toHaveLength(1);
+  });
+
+  it('takes the bad order day off the count', () => {
+    const withPair = assessMonth(world, events, { period: '202403', carrier: 'BNSF' });
+    const without = assessMonth(
+      world,
+      build([
+        { carId: 'BNSF 400123', code: 'AP', at: '2024-03-04T00:00', trackId: 'IT-9' },
+        { carId: 'BNSF 400123', code: 'REL', at: '2024-03-08T00:00' },
+      ]),
+      { period: '202403', carrier: 'BNSF' }
+    );
+    expect(withPair.assessments[0].chargeableDays).toBe(without.assessments[0].chargeableDays - 1);
+  });
+
+  it('reports a bad order that was never lifted', () => {
+    const open = build([
+      { carId: 'BNSF 400123', code: 'AP', at: '2024-03-04T00:00', trackId: 'IT-9' },
+      { carId: 'BNSF 400123', code: 'BO', at: '2024-03-05T00:00' },
+    ]);
+    const result = assessMonth(world, open, { period: '202403', carrier: 'BNSF' });
+    expect(result.assessments[0].unclosedSuspensions).toEqual([]);
+    expect(result.assessments[0].suspensions).toHaveLength(1);
+  });
+
+  it('leaves an ordinary car with no suspensions', () => {
+    const plain = build([
+      { carId: 'BNSF 400123', code: 'AP', at: '2024-03-04T00:00', trackId: 'IT-9' },
+      { carId: 'BNSF 400123', code: 'REL', at: '2024-03-08T00:00' },
+    ]);
+    const result = assessMonth(world, plain, { period: '202403', carrier: 'BNSF' });
+    expect(result.assessments[0].suspensions).toEqual([]);
+  });
+});
+
 describe('the period cut off', () => {
   it('bills a car still standing at month end to the cut off', () => {
     const events = build([

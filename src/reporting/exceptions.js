@@ -16,6 +16,7 @@ export const EXCEPTION = Object.freeze({
   STILL_OPEN: 'still-open',
   RELIEF_DECLINED: 'relief-declined',
   LONG_STAND: 'long-stand',
+  OPEN_SUSPENSION: 'open-suspension',
   NO_CHARGE: 'no-charge',
 });
 
@@ -24,8 +25,9 @@ const SEVERITY = Object.freeze({
   [EXCEPTION.NEVER_NOTIFIED]: 2,
   [EXCEPTION.STILL_OPEN]: 3,
   [EXCEPTION.LONG_STAND]: 4,
-  [EXCEPTION.RELIEF_DECLINED]: 5,
-  [EXCEPTION.NO_CHARGE]: 6,
+  [EXCEPTION.OPEN_SUSPENSION]: 5,
+  [EXCEPTION.RELIEF_DECLINED]: 6,
+  [EXCEPTION.NO_CHARGE]: 7,
 });
 
 export function exceptionsFor(assessment, { longStandDays = 14 } = {}) {
@@ -57,6 +59,13 @@ export function exceptionsFor(assessment, { longStandDays = 14 } = {}) {
         detail: `stood more than ${longStandDays} days`,
       });
     }
+  }
+  for (const open of assessment.unclosedSuspensions ?? []) {
+    found.push({
+      kind: EXCEPTION.OPEN_SUSPENSION,
+      carId: assessment.carId,
+      detail: `a ${open.code} was reported and never lifted`,
+    });
   }
   const declined = assessment.counts.flatMap((count) => count.relief.declined);
   if (declined.length > 0) {

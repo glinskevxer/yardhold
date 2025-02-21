@@ -67,6 +67,22 @@ describe('exceptionsFor', () => {
     expect(entry.detail).toContain('2 relief record(s)');
   });
 
+  it('flags a suspension that was never lifted', () => {
+    const found = exceptionsFor(
+      assessment('BNSF 1', { unclosedSuspensions: [{ code: 'BO', at: 0 }] })
+    );
+    const entry = found.find((item) => item.kind === EXCEPTION.OPEN_SUSPENSION);
+    expect(entry.detail).toContain('BO was reported and never lifted');
+  });
+
+  it('says nothing when there are no open suspensions', () => {
+    expect(
+      exceptionsFor(assessment('BNSF 1', { unclosedSuspensions: [] })).some(
+        (item) => item.kind === EXCEPTION.OPEN_SUSPENSION
+      )
+    ).toBe(false);
+  });
+
   it('flags a car that stood but was never chargeable', () => {
     const found = exceptionsFor(assessment('BNSF 1', { chargeableDays: 0 }));
     expect(found.some((entry) => entry.kind === EXCEPTION.NO_CHARGE)).toBe(true);
