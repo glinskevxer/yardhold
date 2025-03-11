@@ -4,6 +4,8 @@ import { IngestError, ValidationError, isSpurtallyError } from '../core/errors.j
 import { requireString } from '../core/guards.js';
 import { loadConfig } from '../config/loadConfig.js';
 import { parseDocument } from '../config/schema.js';
+import { ingestCsv } from '../io/ingestEvents.js';
+import { assessMonth } from '../assessment/runMonth.js';
 import { OUTPUT } from './format.js';
 
 /**
@@ -51,6 +53,23 @@ export function commandContext(options = {}, deps = {}) {
     asOf: options.asOf,
     period: options.period === undefined ? undefined : resolvePeriod(options.period),
   };
+}
+
+/**
+ * Every command does the same three things before it does its own: build the
+ * world, read the feed and assess the month. Four copies of that had already
+ * drifted apart on which offset the feed was read at.
+ */
+export function loadRun(options, deps = {}) {
+  const context = commandContext(options, deps);
+  const feed = ingestCsv(readTextFile(options.events, deps), {
+    offsetMinutes: context.world.settings.offsetMinutes,
+  });
+  const result = assessMonth(context.world, feed.events, {
+    period: context.period,
+    carrier: options.carrier,
+  });
+  return { context, feed, result };
 }
 
 /** Turn a thrown domain error into a message and an exit code, never a stack. */

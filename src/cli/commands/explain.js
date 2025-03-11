@@ -1,14 +1,12 @@
 import { NotFoundError } from '../../core/errors.js';
 import { requireString } from '../../core/guards.js';
 import { normalizeCarId } from '../../equipment/reportingMarks.js';
-import { ingestCsv } from '../../io/ingestEvents.js';
 import { formatEvent } from '../../events/event.js';
-import { assessMonth } from '../../assessment/runMonth.js';
 import { explainSelection } from '../../tariff/tariffBook.js';
 import { describeExclusion } from '../../exclusions/exclusion.js';
 import { explainRefusal } from '../../exclusions/eligibility.js';
 import { OUTPUT, keyValueBlock, plainMoney, renderRows } from '../format.js';
-import { commandContext, readTextFile } from '../context.js';
+import { loadRun } from '../context.js';
 
 /**
  * spurtally explain
@@ -102,14 +100,7 @@ export function eventTrail(feed, carId) {
 }
 
 export function runExplain(options, deps = {}) {
-  const context = commandContext(options, deps);
-  const feed = ingestCsv(readTextFile(options.events, deps), {
-    offsetMinutes: context.world.settings.offsetMinutes,
-  });
-  const result = assessMonth(context.world, feed.events, {
-    period: context.period,
-    carrier: options.carrier,
-  });
+  const { context, feed, result } = loadRun(options, deps);
   const explanation = explainCar(context.world, result, options.car);
   const text =
     context.output === OUTPUT.JSON

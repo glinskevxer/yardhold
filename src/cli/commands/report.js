@@ -1,12 +1,11 @@
 import { ValidationError } from '../../core/errors.js';
 import { requireOneOf } from '../../core/guards.js';
-import { ingestCsv } from '../../io/ingestEvents.js';
-import { assessMonth } from '../../assessment/runMonth.js';
+
 import { exceptionReport, exceptionRows } from '../../reporting/exceptions.js';
 import { assessmentKpis, reliefKpis } from '../../reporting/kpi.js';
 import { dwellSummary, fromDetentions, toDays } from '../../reporting/dwell.js';
 import { OUTPUT, keyValueBlock, plainMoney, renderRows } from '../format.js';
-import { commandContext, readTextFile } from '../context.js';
+import { loadRun } from '../context.js';
 
 /**
  * spurtally report
@@ -88,17 +87,10 @@ export function reportBody(kind, result, output) {
 }
 
 export function runReport(options, deps = {}) {
-  const context = commandContext(options, deps);
   const kind = options.report ?? REPORT.EXCEPTIONS;
   if (!REPORTS.includes(kind)) {
     throw new ValidationError('report has to be exceptions, kpi or dwell', { report: kind });
   }
-  const feed = ingestCsv(readTextFile(options.events, deps), {
-    offsetMinutes: context.world.settings.offsetMinutes,
-  });
-  const result = assessMonth(context.world, feed.events, {
-    period: context.period,
-    carrier: options.carrier,
-  });
+  const { context, result } = loadRun(options, deps);
   return { text: reportBody(kind, result, context.output), result };
 }

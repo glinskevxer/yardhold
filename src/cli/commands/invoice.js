@@ -1,6 +1,5 @@
 import { requireString } from '../../core/guards.js';
-import { ingestCsv } from '../../io/ingestEvents.js';
-import { assessMonth, assessmentsFor, consigneesIn } from '../../assessment/runMonth.js';
+import { assessmentsFor, consigneesIn } from '../../assessment/runMonth.js';
 import { creditLedger } from '../../average/credits.js';
 import { reconcile } from '../../average/reconcile.js';
 import { buildInvoice } from '../../invoice/build.js';
@@ -8,7 +7,7 @@ import { RENDER_FORMAT, renderInvoice } from '../../invoice/render.js';
 import { agreementFor } from '../../config/loadConfig.js';
 import { rateForDay } from '../../tariff/rateLadder.js';
 import { OUTPUT } from '../format.js';
-import { commandContext, readTextFile } from '../context.js';
+import { loadRun } from '../context.js';
 
 /**
  * spurtally invoice
@@ -83,15 +82,8 @@ export function invoiceReport(invoices, { output = OUTPUT.TABLE } = {}) {
 }
 
 export function runInvoice(options, deps = {}) {
-  const context = commandContext(options, deps);
   requireString(options.issuedOn, 'issuedOn');
-  const feed = ingestCsv(readTextFile(options.events, deps), {
-    offsetMinutes: context.world.settings.offsetMinutes,
-  });
-  const result = assessMonth(context.world, feed.events, {
-    period: context.period,
-    carrier: options.carrier,
-  });
+  const { context, result } = loadRun(options, deps);
   const invoices = buildAll(context.world, result, { issuedOn: options.issuedOn });
   return { text: invoiceReport(invoices, { output: context.output }), invoices, result };
 }

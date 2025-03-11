@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   commandContext,
+  loadRun,
   loadWorld,
   readTextFile,
   reportError,
@@ -8,6 +9,7 @@ import {
   resolvePeriod,
 } from '../../src/cli/context.js';
 import { OUTPUT } from '../../src/cli/format.js';
+import { SERVICE } from '../../src/tariff/freeTimeTable.js';
 import { IngestError, NotFoundError, ValidationError } from '../../src/core/errors.js';
 
 const document = {
@@ -16,12 +18,33 @@ const document = {
     { id: 'IT-9', splc: '412300', name: 'Delta lead', capacityCars: 6, consigneeId: 'DELTA' },
   ],
   parties: [{ id: 'DELTA', name: 'Delta Chemical', noticeAddress: 'rail@delta.example' }],
-  tariffs: [],
+  tariffs: [
+    {
+      page: {
+        id: 'DEM-4000',
+        carrier: 'BNSF',
+        notificationRequired: false,
+        ladder: [{ fromDay: 1, rate: '150.00' }],
+        freeTime: [{ service: SERVICE.UNLOADING, days: 1 }],
+      },
+      effectiveFrom: '2024-01-01',
+    },
+  ],
 };
+
+const feed = [
+  'car,event,event_time,track',
+  'BNSF 400123,AP,2024-03-04T00:00,IT-9',
+  'BNSF 400123,REL,2024-03-08T00:00,IT-9',
+  '',
+].join('\n');
 
 const readFile = (path) => {
   if (path.endsWith('world.json')) {
     return JSON.stringify(document);
+  }
+  if (path.endsWith('events.csv')) {
+    return feed;
   }
   if (path.endsWith('broken.json')) {
     return '{ not json';
@@ -131,5 +154,42 @@ describe('reportError', () => {
 
   it('marks anything else as unexpected', () => {
     expect(reportError(new TypeError('boom'))).toEqual({ message: 'unexpected: boom', code: 70 });
+  });
+});
+
+describe('loadRun', () => {
+  const options = {
+    config: 'world.json',
+    events: 'events.csv',
+    period: '202403',
+    carrier: 'BNSF',
+  };
+
+  it('builds the world, reads the feed and assesses the month', () => {
+    const { context, feed: read, result } = loadRun(options, { readFile });
+    expect(context.world.stations.size).toBe(1);
+    expect(read.events).toHaveLength(2);
+    expect(result.assessments).toHaveLength(1);
+  });
+
+  it('reads the feed at the offset the world declares', () => {
+    const { feed: read } = loadRun(options, { readFile });
+    expect(read.events[0].offsetMinutes).toBe(-360);
+  });
+
+  it('passes the period and the carrier through', () => {
+    const { result } = loadRun(options, { readFile });
+    expect(result.period).toBe('202403');
+    expect(result.skipped).toEqual([]);
+  });
+
+  it('fails on the config before it reads the feed', () => {
+    expect(() => loadRun({ ...options, config: 'missing.json' }, { readFile })).toThrow(
+      IngestError
+    );
+  });
+
+  it('fails on a feed it cannot read', () => {
+    expect(() => loadRun({ ...options, events: 'missing.csv' }, { readFile })).toThrow(IngestError);
   });
 });

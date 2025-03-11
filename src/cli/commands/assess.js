@@ -1,8 +1,6 @@
-import { requireObject } from '../../core/guards.js';
-import { ingestCsv } from '../../io/ingestEvents.js';
-import { assessMonth, monthTotal } from '../../assessment/runMonth.js';
+import { monthTotal } from '../../assessment/runMonth.js';
 import { OUTPUT, plainMoney, renderRows } from '../format.js';
-import { commandContext, readTextFile } from '../context.js';
+import { loadRun } from '../context.js';
 
 /**
  * spurtally assess
@@ -66,15 +64,7 @@ export function assessReport(result, { output = OUTPUT.TABLE, detail = false } =
 }
 
 export function runAssess(options, deps = {}) {
-  const context = commandContext(options, deps);
-  requireObject(context.world, 'world');
-  const feed = ingestCsv(readTextFile(options.events, deps), {
-    offsetMinutes: context.world.settings.offsetMinutes,
-  });
-  const result = assessMonth(context.world, feed.events, {
-    period: context.period,
-    carrier: options.carrier,
-  });
+  const { context, feed, result } = loadRun(options, deps);
   return {
     text: assessReport(result, { output: context.output, detail: options.detail === true }),
     result,
