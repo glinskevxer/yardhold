@@ -1,5 +1,6 @@
-import { NotFoundError, ValidationError } from '../core/errors.js';
-import { requireArray, requireInteger, requireOneOf } from '../core/guards.js';
+import { ValidationError } from '../core/errors.js';
+import { requireInteger, requireOneOf } from '../core/guards.js';
+import { rateBook } from '../core/rateBook.js';
 import { add, parseMoney, times } from '../core/money.js';
 
 /**
@@ -54,28 +55,19 @@ export function serviceRate({ kind, rate, perHour = false, minimumUnits = 1 } = 
 }
 
 export function serviceBook(rates = []) {
-  const byKind = new Map();
-  for (const entry of requireArray(rates, 'rates')) {
-    const built = typeof entry.rate === 'number' ? entry : serviceRate(entry);
-    byKind.set(built.kind, built);
-  }
+  const book = rateBook({
+    label: 'service rate',
+    rates,
+    keyOf: (entry) => entry.kind,
+    build: (entry) => (typeof entry.rate === 'number' ? entry : serviceRate(entry)),
+  });
   return {
     get size() {
-      return byKind.size;
+      return book.size;
     },
-    find(kind) {
-      return byKind.get(kind);
-    },
-    rateFor(kind) {
-      const found = byKind.get(kind);
-      if (found === undefined) {
-        throw new NotFoundError('service rate', kind);
-      }
-      return found;
-    },
-    kinds() {
-      return [...byKind.keys()].sort();
-    },
+    find: book.find,
+    rateFor: book.rateFor,
+    kinds: book.keys,
   };
 }
 

@@ -1,5 +1,6 @@
 import { ValidationError } from '../core/errors.js';
 import { requireInteger, requireOneOf, requireString } from '../core/guards.js';
+import { rateBook } from '../core/rateBook.js';
 import { add, parseMoney, scale, times } from '../core/money.js';
 import { parseQuantity, quantity, toNumber } from '../core/quantity.js';
 
@@ -55,21 +56,19 @@ export function hireRate({
 }
 
 export function hireBook(rates = []) {
-  const byKind = new Map();
-  for (const entry of rates) {
-    const built = Object.isFrozen(entry) && entry.basis ? entry : hireRate(entry);
-    byKind.set(built.carKind, built);
-  }
+  const book = rateBook({
+    label: 'hire rate',
+    rates,
+    keyOf: (entry) => entry.carKind,
+    build: (entry) => (Object.isFrozen(entry) && entry.basis ? entry : hireRate(entry)),
+  });
   return {
     get size() {
-      return byKind.size;
+      return book.size;
     },
-    find(carKind) {
-      return byKind.get(carKind);
-    },
-    kinds() {
-      return [...byKind.keys()].sort();
-    },
+    find: book.find,
+    rateFor: book.rateFor,
+    kinds: book.keys,
   };
 }
 
