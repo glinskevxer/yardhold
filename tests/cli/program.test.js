@@ -45,15 +45,19 @@ function harness() {
   const out = [];
   const errs = [];
   const codes = [];
+  const files = [];
   return {
     out,
     errs,
     codes,
+    files,
     deps: {
       readFile,
       write: (text) => out.push(text),
       fail: (text) => errs.push(text),
       exit: (code) => codes.push(code),
+      writeFile: (path, text) => files.push({ path, text }),
+      mkdir: () => {},
     },
   };
 }
@@ -183,6 +187,30 @@ describe('failures', () => {
     const rig = harness();
     const code = await main(['nonesuch'], rig.deps);
     expect(code).not.toBe(0);
+  });
+});
+
+describe('writing to a file', () => {
+  it('writes rather than printing when out is given', async () => {
+    const rig = harness();
+    await main(['assess', ...common, '-o', 'csv', '--out', 'out/march.csv'], rig.deps);
+    expect(rig.files).toHaveLength(1);
+    expect(rig.files[0].text).toContain('BNSF 400123');
+    expect(rig.out[0]).toMatch(/^wrote /);
+  });
+
+  it('refuses a name that disagrees with the format', async () => {
+    const rig = harness();
+    await main(['assess', ...common, '-o', 'json', '--out', 'out/march.csv'], rig.deps);
+    expect(rig.files).toEqual([]);
+    expect(rig.errs[0]).toMatch(/^validation:/);
+  });
+
+  it('gives every command the flag', () => {
+    const program = buildProgram(harness().deps);
+    for (const name of commandNames(program)) {
+      expect(optionsOf(program, name)).toContain('--out');
+    }
   });
 });
 

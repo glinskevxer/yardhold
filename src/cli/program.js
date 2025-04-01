@@ -3,7 +3,8 @@ import { runAssess } from './commands/assess.js';
 import { runInvoice } from './commands/invoice.js';
 import { runExplain } from './commands/explain.js';
 import { runReport } from './commands/report.js';
-import { reportError } from './context.js';
+import { reportError, resolveOutput } from './context.js';
+import { emit } from '../io/output.js';
 
 export const VERSION = '0.7.0';
 
@@ -22,7 +23,8 @@ function shared(command) {
     .requiredOption('-e, --events <path>', 'car event feed as CSV')
     .requiredOption('-p, --period <yyyymm>', 'billing period')
     .requiredOption('-r, --carrier <mark>', 'serving carrier')
-    .option('-o, --output <format>', 'table, csv or json', 'table');
+    .option('-o, --output <format>', 'table, csv or json', 'table')
+    .option('--out <path>', 'write to a file rather than to the terminal');
 }
 
 export function buildProgram(deps = {}) {
@@ -33,7 +35,14 @@ export function buildProgram(deps = {}) {
   function guard(run) {
     return (options) => {
       try {
-        write(run(options, deps).text);
+        emit(
+          run(options, deps).text,
+          { ...options, output: resolveOutput(options.output) },
+          {
+            ...deps,
+            write,
+          }
+        );
       } catch (error) {
         const reported = reportError(error);
         fail(reported.message);
