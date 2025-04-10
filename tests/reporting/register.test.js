@@ -134,6 +134,29 @@ describe('registerRows', () => {
   });
 });
 
+describe('the grid reads as a ladder', () => {
+  it('shows a car climbing the rungs', () => {
+    const climbing = assessment('A', {
+      charged: [
+        { date: '2024-03-04', dayIndex: 3 },
+        { date: '2024-03-05', dayIndex: 4 },
+        { date: '2024-03-06', dayIndex: 5 },
+      ],
+    });
+    expect(registerRow(climbing, ['2024-03-04', '2024-03-05', '2024-03-06']).grid).toBe('345');
+  });
+
+  it('shows a car that never went over free time', () => {
+    const quick = assessment('B', { free: ['2024-03-04', '2024-03-05'] });
+    expect(registerRow(quick, ['2024-03-04', '2024-03-05', '2024-03-06']).grid).toBe('ff.');
+  });
+
+  it('shows a car relieved for its whole stand', () => {
+    const relieved = assessment('C', { dropped: ['2024-03-04', '2024-03-05'] });
+    expect(registerRow(relieved, ['2024-03-04', '2024-03-05']).grid).toBe('rr');
+  });
+});
+
 describe('busiestDay', () => {
   it('finds the day with the most cars on the ground', () => {
     expect(busiestDay(buildRegister(result))).toBe('2024-03-05');

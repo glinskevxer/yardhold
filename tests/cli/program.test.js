@@ -156,6 +156,22 @@ describe('report', () => {
     expect(rig.out[0]).toContain('plant');
   });
 
+  it('runs the register when asked', async () => {
+    const rig = harness();
+    await main(['report', ...common, '-t', 'register'], rig.deps);
+    expect(rig.out[0]).toContain('BNSF 400123');
+    expect(rig.out[0].split('\n')[0]).toMatch(/^car\s+\d+/);
+  });
+
+  it('writes the register as a CSV to a file', async () => {
+    const rig = harness();
+    await main(
+      ['report', ...common, '-t', 'register', '-o', 'csv', '--out', 'out/register.csv'],
+      rig.deps
+    );
+    expect(rig.files[0].text.split('\n')[0]).toBe('car,consignee,grid,chargeable,amount');
+  });
+
   it('refuses a report it does not have', async () => {
     const rig = harness();
     await main(['report', ...common, '-t', 'weather'], rig.deps);

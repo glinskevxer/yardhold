@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   REPORT,
   dwellBody,
+  registerBody,
   exceptionsBody,
   kpiBody,
   reportBody,
@@ -116,11 +117,32 @@ describe('dwellBody', () => {
   });
 });
 
+describe('registerBody', () => {
+  it('draws the grid', () => {
+    const text = registerBody(result, OUTPUT.TABLE);
+    expect(text.split('\n')[0]).toMatch(/^car\s+\d+/);
+    expect(text).toContain('BNSF 400123');
+  });
+
+  it('writes the days and the rows as JSON', () => {
+    const parsed = JSON.parse(registerBody(result, OUTPUT.JSON));
+    expect(parsed.period).toBe('202403');
+    expect(parsed.days.length).toBeGreaterThan(0);
+    expect(parsed.rows[0].grid).toMatch(/^[.\-rf0-9]+$/);
+  });
+
+  it('writes a CSV with the grid in a column', () => {
+    const csv = registerBody(result, OUTPUT.CSV);
+    expect(csv.split('\n')[0]).toBe('car,consignee,grid,chargeable,amount');
+  });
+});
+
 describe('reportBody', () => {
   it('dispatches on the kind', () => {
     expect(reportBody(REPORT.EXCEPTIONS, result, OUTPUT.TABLE)).toContain('not-assessed');
     expect(reportBody(REPORT.KPI, result, OUTPUT.TABLE)).toContain('respots');
     expect(reportBody(REPORT.DWELL, result, OUTPUT.TABLE)).toContain('yard');
+    expect(reportBody(REPORT.REGISTER, result, OUTPUT.TABLE)).toContain('BNSF 400123');
   });
 
   it('refuses a kind it does not have', () => {
@@ -139,7 +161,24 @@ describe('runReport', () => {
 
   it('refuses a kind it does not have before doing the work', () => {
     expect(() => runReport({ ...options, report: 'weather' }, { readFile })).toThrow(
-      /exceptions, kpi or dwell/
+      /report has to be one of/
+    );
+  });
+
+  it('names every report it does have in the refusal', () => {
+    try {
+      runReport({ ...options, report: 'weather' }, { readFile });
+      throw new Error('should have thrown');
+    } catch (error) {
+      for (const kind of Object.values(REPORT)) {
+        expect(error.message).toContain(kind);
+      }
+    }
+  });
+
+  it('runs the register', () => {
+    expect(runReport({ ...options, report: 'register' }, { readFile }).text).toContain(
+      'BNSF 400123'
     );
   });
 });
