@@ -3,6 +3,7 @@ import { runAssess } from './commands/assess.js';
 import { runInvoice } from './commands/invoice.js';
 import { runExplain } from './commands/explain.js';
 import { runReport } from './commands/report.js';
+import { runReconcile } from './commands/reconcile.js';
 import { reportError, resolveOutput } from './context.js';
 import { emit } from '../io/output.js';
 
@@ -74,6 +75,12 @@ export function buildProgram(deps = {}) {
     .option('-t, --report <kind>', 'exceptions, kpi, dwell or register', 'exceptions')
     .action(guard(runReport));
 
+  shared(program.command('reconcile').description('compare our count with the carrier bill'))
+    .requiredOption('-b, --carrier-invoice <path>', 'the carrier demurrage invoice as CSV')
+    .option('-a, --all', 'show the cars that agree as well')
+    .option('--tolerance <cents>', 'cents of difference to ignore')
+    .action(guard(runReconcile));
+
   program.addHelpText(
     'after',
     [
@@ -84,6 +91,7 @@ export function buildProgram(deps = {}) {
       '  spurtally invoice -c world.json -e march.csv -p 202403 -r BNSF -i 2024-04-05',
       '  spurtally explain -c world.json -e march.csv -p 202403 -r BNSF -k "BNSF 400123"',
       '  spurtally report  -c world.json -e march.csv -p 202403 -r BNSF -t kpi',
+      '  spurtally reconcile -c world.json -e march.csv -p 202403 -r BNSF -b carrier.csv',
       '',
       'A period is written YYYYMM and selects the tariff page in force on the day',
       'each car was placed, not the page in force when the invoice is cut.',

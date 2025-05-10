@@ -77,6 +77,7 @@ describe('buildProgram', () => {
       'assess',
       'explain',
       'invoice',
+      'reconcile',
       'report',
     ]);
   });
@@ -230,12 +231,44 @@ describe('writing to a file', () => {
   });
 });
 
+describe('reconcile', () => {
+  const carrier = ['car,amount', 'BNSF 400123,600.00', ''].join('\n');
+
+  function withCarrier() {
+    const rig = harness();
+    const inner = rig.deps.readFile;
+    rig.deps.readFile = (path) => (path.endsWith('carrier.csv') ? carrier : inner(path));
+    return rig;
+  }
+
+  it('reports the disagreement', async () => {
+    const rig = withCarrier();
+    const code = await main(['reconcile', ...common, '-b', 'carrier.csv'], rig.deps);
+    expect(code).toBe(0);
+    expect(rig.out[0]).toContain('overbilled');
+  });
+
+  it('needs the carrier invoice', async () => {
+    const rig = withCarrier();
+    const code = await main(['reconcile', ...common], rig.deps);
+    expect(code).not.toBe(0);
+    expect(rig.out).toEqual([]);
+  });
+
+  it('shows the agreed cars when asked', async () => {
+    const rig = withCarrier();
+    await main(['reconcile', ...common, '-b', 'carrier.csv', '--all'], rig.deps);
+    expect(rig.out[0]).toContain('BNSF 400123');
+  });
+});
+
 describe('the help', () => {
   it('lists every command through the helper', () => {
     expect(commandNames(buildProgram(harness().deps))).toEqual([
       'assess',
       'explain',
       'invoice',
+      'reconcile',
       'report',
     ]);
   });
