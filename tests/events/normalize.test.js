@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   PROBLEM,
+  isProgression,
   applySupersessions,
   checkSequence,
   dedupe,
@@ -122,6 +123,34 @@ describe('checkSequence', () => {
       ])
     );
     expect(problems[0].kind).toBe(PROBLEM.DOUBLE_START);
+  });
+
+  it('allows a constructive placement followed by an actual one', () => {
+    const problems = checkSequence(
+      build([
+        { carId: car, code: 'CP', at: '2024-03-04T06:00' },
+        { carId: car, code: 'AP', at: '2024-03-06T08:00' },
+        { carId: car, code: 'REL', at: '2024-03-09T10:00' },
+      ])
+    );
+    expect(problems).toEqual([]);
+  });
+
+  it('still catches an actual placement followed by another', () => {
+    const problems = checkSequence(
+      build([
+        { carId: car, code: 'AP', at: '2024-03-04T06:00' },
+        { carId: car, code: 'AP', at: '2024-03-06T08:00' },
+      ])
+    );
+    expect(problems[0].kind).toBe(PROBLEM.DOUBLE_START);
+  });
+
+  it('names the progressions it allows', () => {
+    expect(isProgression('CP', 'AP')).toBe(true);
+    expect(isProgression('CP', 'RSP')).toBe(true);
+    expect(isProgression('AP', 'CP')).toBe(false);
+    expect(isProgression('AP', 'AP')).toBe(false);
   });
 
   it('allows a respot after a release', () => {

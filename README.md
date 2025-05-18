@@ -28,11 +28,21 @@ spurtally assess  -c world.json -e march.csv -p 202403 -r BNSF
 spurtally invoice -c world.json -e march.csv -p 202403 -r BNSF -i 2024-04-05
 spurtally explain -c world.json -e march.csv -p 202403 -r BNSF -k "BNSF 400123"
 spurtally report  -c world.json -e march.csv -p 202403 -r BNSF -t kpi
+spurtally reconcile -c world.json -e march.csv -p 202403 -r BNSF -b carrier.csv
 ```
 
-Every command takes `-o table|csv|json`.
+Every command takes `-o table|csv|json` and `--out <path>` to write to a file
+instead of the terminal. The file extension has to agree with the format.
 
-A worked configuration and a month of events are in `examples/`.
+`report` runs one of `exceptions`, `kpi`, `dwell` or `register`. The register is
+a grid of car against day, one character per cell, showing where each day sat on
+the rate ladder.
+
+`reconcile` puts our count beside the carrier's own invoice and names every
+disagreement, which is the thing this was written for.
+
+A worked configuration, a month of events and the carrier's invoice for the same
+month are in `examples/`.
 
 ## Development
 

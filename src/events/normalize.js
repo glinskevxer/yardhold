@@ -83,22 +83,35 @@ export function applySupersessions(events) {
   return { events: applied, problems };
 }
 
+const PROGRESSIONS = Object.freeze({ CP: ['AP', 'RSP'] });
+
+/** Constructive placement followed by actual placement is one arrival. */
+export function isProgression(from, to) {
+  return (PROGRESSIONS[from] ?? []).includes(to);
+}
+
 export function checkSequence(events) {
   const problems = [];
   for (const [carId, stream] of groupByCar(events.filter((record) => !isCancelled(record)))) {
-    let started = false;
+    let startedWith;
     let suspended = false;
     for (const record of stream) {
       const kind = eventKind(record.code);
       if (kind.starts) {
-        if (started) {
+        /**
+         * A car held on the carrier's track and then spotted reports CP and
+         * then AP with no release between, and that is the ordinary way round
+         * rather than a double placement. Flagging it filled the exception
+         * report with every constructively placed car on the property.
+         */
+        if (startedWith !== undefined && !isProgression(startedWith, record.code)) {
           problems.push({ kind: PROBLEM.DOUBLE_START, carId, code: record.code, at: record.at });
         }
-        started = true;
+        startedWith = record.code;
         continue;
       }
       if (kind.stops) {
-        if (!started) {
+        if (startedWith === undefined) {
           problems.push({
             kind: PROBLEM.STOP_BEFORE_START,
             carId,
@@ -106,7 +119,7 @@ export function checkSequence(events) {
             at: record.at,
           });
         } else {
-          started = false;
+          startedWith = undefined;
         }
         continue;
       }
