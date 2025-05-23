@@ -1,13 +1,7 @@
 import { ValidationError } from '../core/errors.js';
 import { optional, requireInteger, requireOneOf, requireString } from '../core/guards.js';
-import { addDays } from '../time/civil.js';
-import {
-  MINUTES_PER_DAY,
-  dateAt,
-  instantFrom,
-  minuteOfDayAt,
-  parseInstant,
-} from '../time/instant.js';
+import { MINUTES_PER_DAY, parseInstant } from '../time/instant.js';
+import { businessHours, nextOpening, receivedAt } from '../time/businessHours.js';
 import { NOTICE_METHOD } from '../site/party.js';
 import { normalizeCarId } from '../equipment/reportingMarks.js';
 
@@ -38,6 +32,7 @@ export function notice({
   acknowledgedAt,
   officeOpensMinute = OFFICE_OPENS_MINUTE,
   officeClosesMinute = OFFICE_CLOSES_MINUTE,
+  calendar,
 } = {}) {
   const car = normalizeCarId(requireString(carId, 'carId'));
   requireOneOf(method, Object.values(NOTICE_METHOD), 'method');
@@ -78,6 +73,7 @@ export function notice({
       offsetMinutes,
       officeOpensMinute,
       officeClosesMinute,
+      calendar,
     }),
   });
 }
@@ -89,25 +85,26 @@ function effectiveMoment({
   offsetMinutes,
   officeOpensMinute,
   officeClosesMinute,
+  calendar,
 }) {
   if (IMMEDIATE.has(method)) {
     return sent;
   }
+  const hours = businessHours({
+    opensMinute: officeOpensMinute,
+    closesMinute: officeClosesMinute,
+    calendar,
+  });
+  /**
+   * A portal posting is not notice until somebody opens it. With no
+   * acknowledgement the earliest the office will presume it was read is the
+   * next opening, which is the following morning for anything posted after the
+   * office was already open.
+   */
   if (method === NOTICE_METHOD.PORTAL) {
-    return acknowledged ?? nextOpening(sent, offsetMinutes, officeOpensMinute);
+    return acknowledged ?? nextOpening(hours, sent, offsetMinutes);
   }
-  const minute = minuteOfDayAt(sent, offsetMinutes);
-  if (minute >= officeOpensMinute && minute < officeClosesMinute) {
-    return sent;
-  }
-  return nextOpening(sent, offsetMinutes, officeOpensMinute, minute >= officeClosesMinute);
-}
-
-function nextOpening(sent, offsetMinutes, officeOpensMinute, tomorrow = false) {
-  const day = dateAt(sent, offsetMinutes);
-  const minute = minuteOfDayAt(sent, offsetMinutes);
-  const target = tomorrow || minute >= officeOpensMinute ? addDays(day, 1) : day;
-  return instantFrom(target, officeOpensMinute, offsetMinutes);
+  return receivedAt(hours, sent, offsetMinutes);
 }
 
 export function isImmediate(record) {

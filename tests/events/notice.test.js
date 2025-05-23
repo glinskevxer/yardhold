@@ -10,6 +10,7 @@ import {
   noticesForCar,
 } from '../../src/events/notice.js';
 import { NOTICE_METHOD } from '../../src/site/party.js';
+import { serviceCalendar } from '../../src/time/serviceCalendar.js';
 import { formatInstant, parseInstant } from '../../src/time/instant.js';
 import { ValidationError } from '../../src/core/errors.js';
 
@@ -17,6 +18,7 @@ const at = (text) => parseInstant(text, -360);
 const shown = (record) => formatInstant(record.effectiveAt, -360);
 
 const base = { carId: 'bnsf400123', method: NOTICE_METHOD.EDI, sentAt: '2024-03-04T03:00' };
+const calendar = serviceCalendar({ id: 'MEM', years: [2024] });
 
 describe('notice', () => {
   it('normalises the car and the consignee', () => {
@@ -128,6 +130,33 @@ describe('two consignees told at the same minute', () => {
     expect(edi.effectiveAt).toBe(at('2024-03-04T03:00'));
     expect(phone.effectiveAt).toBe(at('2024-03-04T08:00'));
     expect(phone.effectiveAt).toBeGreaterThan(edi.effectiveAt);
+  });
+});
+
+describe('a calendar the office keeps', () => {
+  it('holds a Saturday phone call over to Monday', () => {
+    const record = notice({
+      ...base,
+      method: NOTICE_METHOD.PHONE,
+      sentAt: '2024-03-09T09:00',
+      calendar,
+    });
+    expect(shown(record)).toBe('2024-03-11T08:00-06:00');
+  });
+
+  it('leaves an EDI message alone on the same Saturday', () => {
+    const record = notice({ ...base, sentAt: '2024-03-09T09:00', calendar });
+    expect(shown(record)).toBe('2024-03-09T09:00-06:00');
+  });
+
+  it('takes the call at once on a working morning', () => {
+    const record = notice({
+      ...base,
+      method: NOTICE_METHOD.PHONE,
+      sentAt: '2024-03-11T09:00',
+      calendar,
+    });
+    expect(isImmediate(record)).toBe(true);
   });
 });
 
