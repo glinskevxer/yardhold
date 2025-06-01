@@ -79,6 +79,7 @@ describe('buildProgram', () => {
       'invoice',
       'reconcile',
       'report',
+      'validate',
     ]);
   });
 });
@@ -262,6 +263,38 @@ describe('reconcile', () => {
   });
 });
 
+describe('validate', () => {
+  it('passes the worked configuration', async () => {
+    const rig = harness();
+    const code = await main(['validate', '-c', 'world.json'], rig.deps);
+    expect(code).toBe(0);
+    expect(rig.out[0]).toContain('stations');
+  });
+
+  it('reports a broken configuration without a stack', async () => {
+    const rig = harness();
+    const inner = rig.deps.readFile;
+    rig.deps.readFile = (path) =>
+      path.endsWith('bad.json')
+        ? JSON.stringify({
+            ...JSON.parse(inner('world.json')),
+            tracks: [
+              {
+                id: 'IT-9',
+                splc: '412300',
+                name: 'Delta lead',
+                capacityCars: 6,
+                consigneeId: 'NOBODY',
+              },
+            ],
+          })
+        : inner(path);
+    await main(['validate', '-c', 'bad.json'], rig.deps);
+    expect(rig.errs[0]).toMatch(/^validation:/);
+    expect(rig.codes).toEqual([2]);
+  });
+});
+
 describe('the help', () => {
   it('lists every command through the helper', () => {
     expect(commandNames(buildProgram(harness().deps))).toEqual([
@@ -270,12 +303,13 @@ describe('the help', () => {
       'invoice',
       'reconcile',
       'report',
+      'validate',
     ]);
   });
 
-  it('gives every command the shared options', () => {
+  it('gives every month command the shared options', () => {
     const program = buildProgram(harness().deps);
-    for (const name of commandNames(program)) {
+    for (const name of commandNames(program).filter((entry) => entry !== 'validate')) {
       const options = optionsOf(program, name);
       expect(options).toContain('--config');
       expect(options).toContain('--events');
@@ -283,6 +317,13 @@ describe('the help', () => {
       expect(options).toContain('--carrier');
       expect(options).toContain('--output');
     }
+  });
+
+  it('gives validate the config but no event feed', () => {
+    const options = optionsOf(buildProgram(harness().deps), 'validate');
+    expect(options).toContain('--config');
+    expect(options).toContain('--strict');
+    expect(options).not.toContain('--events');
   });
 
   it('gives invoice its issue date and explain its car', () => {
