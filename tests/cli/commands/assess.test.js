@@ -7,55 +7,11 @@ import {
   skippedRows,
 } from '../../../src/cli/commands/assess.js';
 import { OUTPUT } from '../../../src/cli/format.js';
-import { SERVICE } from '../../../src/tariff/freeTimeTable.js';
 import { ValidationError } from '../../../src/core/errors.js';
+import { makeReadFile, sampleOptions } from '../../fixtures/world.js';
 
-const document = {
-  settings: { years: [2024] },
-  stations: [{ splc: '412300', name: 'Memphis North', carrier: 'BNSF' }],
-  tracks: [
-    { id: 'IT-9', splc: '412300', name: 'Delta lead', capacityCars: 6, consigneeId: 'DELTA' },
-  ],
-  parties: [{ id: 'DELTA', name: 'Delta Chemical', noticeAddress: 'a@b.example' }],
-  cars: [{ id: 'BNSF 400123', designation: 'XM' }],
-  tariffs: [
-    {
-      page: {
-        id: 'DEM-4000',
-        carrier: 'BNSF',
-        notificationRequired: false,
-        ladder: [{ fromDay: 1, rate: '150.00' }],
-        freeTime: [{ service: SERVICE.UNLOADING, days: 1 }],
-      },
-      effectiveFrom: '2024-01-01',
-    },
-  ],
-};
-
-const feed = [
-  'car,event,event_time,track',
-  'BNSF 400123,AP,2024-03-04T00:00,IT-9',
-  'BNSF 400123,REL,2024-03-08T00:00,IT-9',
-  'UP 3,AP,2024-03-04T00:00,FOREIGN-1',
-  '',
-].join('\n');
-
-const readFile = (path) => {
-  if (path.endsWith('world.json')) {
-    return JSON.stringify(document);
-  }
-  if (path.endsWith('events.csv')) {
-    return feed;
-  }
-  throw new Error('ENOENT');
-};
-
-const options = {
-  config: 'world.json',
-  events: 'events.csv',
-  period: '202403',
-  carrier: 'BNSF',
-};
+const readFile = makeReadFile();
+const options = { ...sampleOptions };
 
 describe('runAssess', () => {
   const { result, text, feed: read } = runAssess(options, { readFile });

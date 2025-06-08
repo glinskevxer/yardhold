@@ -7,29 +7,8 @@ import {
 } from '../../../src/cli/commands/reconcile.js';
 import { VERDICT } from '../../../src/reporting/reconciliation.js';
 import { OUTPUT } from '../../../src/cli/format.js';
-import { SERVICE } from '../../../src/tariff/freeTimeTable.js';
 import { ValidationError } from '../../../src/core/errors.js';
-
-const document = {
-  settings: { years: [2024] },
-  stations: [{ splc: '412300', name: 'Memphis North', carrier: 'BNSF' }],
-  tracks: [
-    { id: 'IT-9', splc: '412300', name: 'Delta lead', capacityCars: 6, consigneeId: 'DELTA' },
-  ],
-  parties: [{ id: 'DELTA', name: 'Delta Chemical', noticeAddress: 'a@b.example' }],
-  tariffs: [
-    {
-      page: {
-        id: 'DEM-4000',
-        carrier: 'BNSF',
-        notificationRequired: false,
-        ladder: [{ fromDay: 1, rate: '150.00' }],
-        freeTime: [{ service: SERVICE.UNLOADING, days: 1 }],
-      },
-      effectiveFrom: '2024-01-01',
-    },
-  ],
-};
+import { makeReadFile, sampleOptions } from '../../fixtures/world.js';
 
 const feed = [
   'car,event,event_time,track',
@@ -47,26 +26,8 @@ const carrier = [
   '',
 ].join('\n');
 
-const readFile = (path) => {
-  if (path.endsWith('world.json')) {
-    return JSON.stringify(document);
-  }
-  if (path.endsWith('events.csv')) {
-    return feed;
-  }
-  if (path.endsWith('carrier.csv')) {
-    return carrier;
-  }
-  throw new Error('ENOENT');
-};
-
-const options = {
-  config: 'world.json',
-  events: 'events.csv',
-  carrierInvoice: 'carrier.csv',
-  period: '202403',
-  carrier: 'BNSF',
-};
+const readFile = makeReadFile({ feed, carrier });
+const options = { ...sampleOptions, carrierInvoice: 'carrier.csv' };
 
 describe('runReconcile', () => {
   const { rows, text } = runReconcile(options, { readFile });

@@ -11,6 +11,7 @@ import { ingestCsv } from '../../../src/io/ingestEvents.js';
 import { SERVICE } from '../../../src/tariff/freeTimeTable.js';
 import { EVIDENCE, EXCLUSION } from '../../../src/exclusions/exclusion.js';
 import { NotFoundError } from '../../../src/core/errors.js';
+import { makeReadFile, sampleOptions } from '../../fixtures/world.js';
 
 const document = {
   settings: { years: [2024] },
@@ -51,23 +52,8 @@ const feed = [
   '',
 ].join('\n');
 
-const readFile = (path) => {
-  if (path.endsWith('world.json')) {
-    return JSON.stringify(document);
-  }
-  if (path.endsWith('events.csv')) {
-    return feed;
-  }
-  throw new Error('ENOENT');
-};
-
-const options = {
-  config: 'world.json',
-  events: 'events.csv',
-  period: '202403',
-  carrier: 'BNSF',
-  car: 'bnsf400123',
-};
+const readFile = makeReadFile({ document, feed });
+const options = { ...sampleOptions, car: 'bnsf400123' };
 
 const world = loadConfig(document);
 const result = assessMonth(world, ingestCsv(feed).events, { period: '202403', carrier: 'BNSF' });
