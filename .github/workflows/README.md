@@ -1,7 +1,7 @@
 # CI
 
-Every push and pull request against `main` runs the same seven jobs, which
-expand to eight with the node matrix:
+Every push and pull request against `main` runs the same eight jobs, which
+expand to nine with the node matrix:
 
 | job        | what it protects                                                    |
 | ---------- | ------------------------------------------------------------------- |

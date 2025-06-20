@@ -18,13 +18,15 @@
     "SECURITY.md"
   ],
   "scripts": {
-    "lint": "eslint .",
+    "coverage": "vitest run --coverage",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "reconcile": "node bin/spurtally.js reconcile -c examples/memphis-north.json -e examples/march-2024.csv -p 202403 -r BNSF -b examples/carrier-march-2024.csv",
+    "smoke": "node bin/spurtally.js assess -c examples/memphis-north.json -e examples/march-2024.csv -p 202403 -r BNSF",
     "test": "vitest run",
     "test:watch": "vitest",
-    "coverage": "vitest run --coverage",
-    "smoke": "node bin/spurtally.js assess -c examples/memphis-north.json -e examples/march-2024.csv -p 202403 -r BNSF"
+    "validate": "node bin/spurtally.js validate -c examples/memphis-north.json --strict"
   },
   "dependencies": {
     "commander": "13.1.0"

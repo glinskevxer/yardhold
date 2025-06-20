@@ -69,6 +69,19 @@ jobs:
       - run: npm ci
       - run: npm audit --omit=dev --audit-level=moderate
 
+  config:
+    name: validate the worked configuration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.18.2
+          cache: npm
+      - run: npm ci --omit=dev
+      - name: validate
+        run: node bin/spurtally.js validate -c examples/memphis-north.json --strict --fail-on-warning
+
   smoke:
     name: smoke the worked example
     runs-on: ubuntu-latest
@@ -85,6 +98,22 @@ jobs:
         run: node bin/spurtally.js invoice -c examples/memphis-north.json -e examples/march-2024.csv -p 202403 -r BNSF -i 2024-04-05
       - name: report
         run: node bin/spurtally.js report -c examples/memphis-north.json -e examples/march-2024.csv -p 202403 -r BNSF -t kpi
+      - name: register
+        run: node bin/spurtally.js report -c examples/memphis-north.json -e examples/march-2024.csv -p 202403 -r BNSF -t register
+      - name: reconcile
+        run: |
+          node bin/spurtally.js reconcile \
+            -c examples/memphis-north.json \
+            -e examples/march-2024.csv \
+            -p 202403 -r BNSF \
+            -b examples/carrier-march-2024.csv
+      - name: write a file
+        run: |
+          node bin/spurtally.js assess \
+            -c examples/memphis-north.json \
+            -e examples/march-2024.csv \
+            -p 202403 -r BNSF -o csv --out out/march.csv
+          test -s out/march.csv
 
   package:
     name: package contents

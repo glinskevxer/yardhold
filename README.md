@@ -29,6 +29,7 @@ spurtally invoice -c world.json -e march.csv -p 202403 -r BNSF -i 2024-04-05
 spurtally explain -c world.json -e march.csv -p 202403 -r BNSF -k "BNSF 400123"
 spurtally report  -c world.json -e march.csv -p 202403 -r BNSF -t kpi
 spurtally reconcile -c world.json -e march.csv -p 202403 -r BNSF -b carrier.csv
+spurtally validate  -c world.json --strict
 ```
 
 Every command takes `-o table|csv|json` and `--out <path>` to write to a file
@@ -51,6 +52,8 @@ npm install
 npm test
 npm run coverage
 npm run lint
+npm run validate
+npm run smoke
 ```
 
 Tests live in `tests/` and mirror `src/`.
