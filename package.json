@@ -4,6 +4,11 @@
   "private": true,
   "description": "Demurrage, detention and car hire accounting for private industry track",
   "type": "module",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "main": "./src/index.js",
   "engines": {
     "node": ">=20.11"
   },
