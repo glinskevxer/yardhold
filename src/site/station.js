@@ -1,6 +1,7 @@
 import { ValidationError } from '../core/errors.js';
 import { keyedBook } from '../core/keyedBook.js';
 import { requireArray, requireInteger, requireString } from '../core/guards.js';
+import { DEFAULT_OFFSET_MINUTES } from '../time/instant.js';
 
 /**
  * A station is the billing point. The SPLC is the six digit code the carrier
@@ -14,7 +15,7 @@ export function station({
   splc,
   name,
   carrier,
-  offsetMinutes = -360,
+  offsetMinutes = DEFAULT_OFFSET_MINUTES,
   calendarId,
   switchingLimits = [],
 } = {}) {

@@ -1,6 +1,7 @@
 import { IngestError } from '../core/errors.js';
 import { requireString } from '../core/guards.js';
 import { trackEvent } from '../events/event.js';
+import { DEFAULT_OFFSET_MINUTES } from '../time/instant.js';
 
 /**
  * Reading a 322.
@@ -46,7 +47,7 @@ export function parseDateTime(date, time) {
   return `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}T${clock.slice(0, 2)}:${clock.slice(2, 4)}`;
 }
 
-export function readSegments(segments, { offsetMinutes = -360 } = {}) {
+export function readSegments(segments, { offsetMinutes = DEFAULT_OFFSET_MINUTES } = {}) {
   const events = [];
   const problems = [];
   let carId;

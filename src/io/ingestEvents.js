@@ -3,6 +3,7 @@ import { requireArray, requireObject, requireString } from '../core/guards.js';
 import { EVENT_SOURCE, trackEvent } from '../events/event.js';
 import { normalizeStream } from '../events/normalize.js';
 import { parseCsvRecords } from './csv.js';
+import { DEFAULT_OFFSET_MINUTES } from '../time/instant.js';
 
 /**
  * Reading a carrier event feed. Every carrier names its columns differently and
@@ -34,7 +35,11 @@ function pick(record, names) {
 
 export function mapRow(
   record,
-  { columnMap = DEFAULT_COLUMN_MAP, offsetMinutes = -360, source = EVENT_SOURCE.CARRIER } = {}
+  {
+    columnMap = DEFAULT_COLUMN_MAP,
+    offsetMinutes = DEFAULT_OFFSET_MINUTES,
+    source = EVENT_SOURCE.CARRIER,
+  } = {}
 ) {
   requireObject(record, 'record');
   const mapped = {};

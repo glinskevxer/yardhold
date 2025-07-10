@@ -1,5 +1,5 @@
 import { requireArray, requireString } from '../core/guards.js';
-import { formatInstant } from '../time/instant.js';
+import { DEFAULT_OFFSET_MINUTES, formatInstant } from '../time/instant.js';
 import { CHARGE_TYPE, lineItem } from './lineItem.js';
 import { invoice } from './invoice.js';
 
@@ -44,7 +44,7 @@ export function storageLines(results) {
   );
 }
 
-export function switchingLines(result, { offsetMinutes = -360 } = {}) {
+export function switchingLines(result, { offsetMinutes = DEFAULT_OFFSET_MINUTES } = {}) {
   return result.lines.map((line) =>
     lineItem({
       type: CHARGE_TYPE.SWITCHING,

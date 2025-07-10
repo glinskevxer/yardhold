@@ -1,6 +1,7 @@
 import { ConflictError, ValidationError } from '../core/errors.js';
 import { optional, requireArray, requireOneOf, requireString } from '../core/guards.js';
 import { formatCivilDate, parseCivilDate, periodKey } from '../time/civil.js';
+import { DEFAULT_OFFSET_MINUTES, dateAt } from '../time/instant.js';
 
 /**
  * Closing a period.
@@ -104,7 +105,7 @@ export function periodRegister(records = []) {
 }
 
 /** Sort events into the period they belong to and the ones that have to wait. */
-export function routeLateEvents(register, events, { offsetMinutes = -360, dateAt } = {}) {
+export function routeLateEvents(register, events, { offsetMinutes = DEFAULT_OFFSET_MINUTES } = {}) {
   const accepted = [];
   const held = [];
   for (const event of events) {

@@ -3,6 +3,7 @@ import { optional, requireOneOf, requireString } from '../core/guards.js';
 import { fingerprint } from '../core/ids.js';
 import { formatInstant, parseInstant } from '../time/instant.js';
 import { durationMinutes, period } from '../time/period.js';
+import { DEFAULT_OFFSET_MINUTES } from '../time/instant.js';
 
 /**
  * An exclusion is a stretch of time that does not count against free time. What
@@ -44,7 +45,7 @@ export function exclusion({
   kind,
   from,
   to,
-  offsetMinutes = -360,
+  offsetMinutes = DEFAULT_OFFSET_MINUTES,
   evidence = EVIDENCE.OFFICE_RECORD,
   reference,
   splc,

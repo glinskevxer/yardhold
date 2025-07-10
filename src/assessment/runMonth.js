@@ -1,6 +1,6 @@
 import { requireObject, requireString } from '../core/guards.js';
 import { endOfMonth, formatCivilDate, parseCivilDate, startOfMonth } from '../time/civil.js';
-import { MINUTES_PER_DAY, instantFrom } from '../time/instant.js';
+import { DEFAULT_OFFSET_MINUTES, MINUTES_PER_DAY, instantFrom } from '../time/instant.js';
 import { groupByCar } from '../events/ledger.js';
 import { SERVICE } from '../tariff/freeTimeTable.js';
 import { serviceFor } from '../events/waybill.js';
@@ -17,7 +17,7 @@ import { assessCar } from './assess.js';
  * who has not read the tariff and is the only correct answer.
  */
 
-export function periodBounds(period, offsetMinutes = -360) {
+export function periodBounds(period, offsetMinutes = DEFAULT_OFFSET_MINUTES) {
   requireString(period, 'period');
   const first = parseCivilDate(`${period.slice(0, 4)}-${period.slice(4, 6)}-01`);
   const last = endOfMonth(first);

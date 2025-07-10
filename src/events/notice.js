@@ -1,6 +1,6 @@
 import { ValidationError } from '../core/errors.js';
 import { optional, requireInteger, requireOneOf, requireString } from '../core/guards.js';
-import { MINUTES_PER_DAY, parseInstant } from '../time/instant.js';
+import { DEFAULT_OFFSET_MINUTES, MINUTES_PER_DAY, parseInstant } from '../time/instant.js';
 import { businessHours, nextOpening, receivedAt } from '../time/businessHours.js';
 import { NOTICE_METHOD } from '../site/party.js';
 import { normalizeCarId } from '../equipment/reportingMarks.js';
@@ -26,7 +26,7 @@ export function notice({
   carId,
   method,
   sentAt,
-  offsetMinutes = -360,
+  offsetMinutes = DEFAULT_OFFSET_MINUTES,
   consigneeId,
   address,
   acknowledgedAt,

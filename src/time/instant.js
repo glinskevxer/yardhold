@@ -17,6 +17,14 @@ const STAMP_PATTERN =
 
 export const MINUTES_PER_DAY = 1440;
 
+/**
+ * The station offset used when a record does not carry one. Central standard
+ * time, because that is where this office is and because rail operating
+ * calendars here are kept on standard time all year. Fifteen modules were
+ * writing the number out, and one of them had it wrong.
+ */
+export const DEFAULT_OFFSET_MINUTES = -360;
+
 export function instant(epochMinute) {
   requireInteger(epochMinute, 'epochMinute');
   return epochMinute;

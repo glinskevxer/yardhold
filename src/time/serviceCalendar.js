@@ -9,6 +9,7 @@ import {
   parseCivilDate,
 } from './civil.js';
 import { STANDARD_HOLIDAYS, holidaySet, isHoliday } from './holidays.js';
+import { DEFAULT_OFFSET_MINUTES } from './instant.js';
 
 /**
  * A service calendar answers one question: did the carrier work this track on
@@ -19,7 +20,7 @@ import { STANDARD_HOLIDAYS, holidaySet, isHoliday } from './holidays.js';
 
 export function serviceCalendar({
   id,
-  offsetMinutes = -360,
+  offsetMinutes = DEFAULT_OFFSET_MINUTES,
   serviceDays = [1, 2, 3, 4, 5],
   holidayRules = STANDARD_HOLIDAYS,
   years = [],

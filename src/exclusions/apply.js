@@ -3,6 +3,7 @@ import { dayUnits } from '../time/dayCount.js';
 import { durationMinutes, intersect, mergePeriods, subtract } from '../time/period.js';
 import { chargeableUnitOptions, countsInWholeDays } from '../tariff/tariff.js';
 import { eligibleExclusions } from './eligibility.js';
+import { DEFAULT_OFFSET_MINUTES } from '../time/instant.js';
 
 /**
  * Taking the relief off a detention.
@@ -41,7 +42,7 @@ export function relieveByWholeDays(span, windows, options) {
 export function relieveSpan(
   span,
   exclusions,
-  { page, offsetMinutes = -360, placement, carId } = {}
+  { page, offsetMinutes = DEFAULT_OFFSET_MINUTES, placement, carId } = {}
 ) {
   requireObject(page, 'page');
   const eligible = eligibleExclusions(exclusions, { placement, page, carId });

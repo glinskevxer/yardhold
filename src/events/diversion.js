@@ -3,6 +3,7 @@ import { optional, requireOneOf, requireString } from '../core/guards.js';
 import { parseMoney } from '../core/money.js';
 import { parseInstant } from '../time/instant.js';
 import { normalizeCarId } from '../equipment/reportingMarks.js';
+import { DEFAULT_OFFSET_MINUTES } from '../time/instant.js';
 
 /**
  * Diversion and reconsignment.
@@ -31,7 +32,7 @@ export function routeChange({
   carId,
   kind,
   orderedAt,
-  offsetMinutes = -360,
+  offsetMinutes = DEFAULT_OFFSET_MINUTES,
   fromSplc,
   toSplc,
   fromConsigneeId,

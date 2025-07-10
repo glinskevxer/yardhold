@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DEFAULT_OFFSET_MINUTES,
   MINUTES_PER_DAY,
   addHours,
   addMinutes,
@@ -120,5 +121,22 @@ describe('arithmetic and ordering', () => {
     const values = [base, addHours(base, 5), addHours(base, -3)];
     expect(earliest(values)).toBe(addHours(base, -3));
     expect(latest(values)).toBe(addHours(base, 5));
+  });
+});
+
+describe('the default station offset', () => {
+  it('is central standard time', () => {
+    expect(DEFAULT_OFFSET_MINUTES).toBe(-360);
+    expect(formatOffset(DEFAULT_OFFSET_MINUTES)).toBe('-06:00');
+  });
+
+  it('is what CENTRAL means everywhere in these tests', () => {
+    expect(CENTRAL).toBe(DEFAULT_OFFSET_MINUTES);
+  });
+
+  it('reads a stamp with no zone at it', () => {
+    expect(parseInstant('2024-03-07T14:30', DEFAULT_OFFSET_MINUTES)).toBe(
+      parseInstant('2024-03-07T14:30-06:00')
+    );
   });
 });

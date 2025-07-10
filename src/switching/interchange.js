@@ -1,6 +1,6 @@
 import { ValidationError } from '../core/errors.js';
 import { optional, requireInteger, requireOneOf, requireString } from '../core/guards.js';
-import { addHours, formatInstant, parseInstant } from '../time/instant.js';
+import { DEFAULT_OFFSET_MINUTES, addHours, formatInstant, parseInstant } from '../time/instant.js';
 import { normalizeCarId } from '../equipment/reportingMarks.js';
 
 /**
@@ -33,7 +33,7 @@ export function interchange({
   deliveringCarrier,
   receivingCarrier,
   offeredAt,
-  offsetMinutes = -360,
+  offsetMinutes = DEFAULT_OFFSET_MINUTES,
   status = INTERCHANGE_STATUS.OFFERED,
   settledAt,
   refusalReason,

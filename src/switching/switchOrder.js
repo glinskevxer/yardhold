@@ -1,7 +1,7 @@
 import { ValidationError } from '../core/errors.js';
 import { optional, requireOneOf, requireString } from '../core/guards.js';
 import { fingerprint } from '../core/ids.js';
-import { parseInstant } from '../time/instant.js';
+import { DEFAULT_OFFSET_MINUTES, parseInstant } from '../time/instant.js';
 import { normalizeCarId } from '../equipment/reportingMarks.js';
 
 /**
@@ -40,7 +40,7 @@ export function switchOrder({
   kind,
   reason = SWITCH_REASON.CUSTOMER_REQUEST,
   at,
-  offsetMinutes = -360,
+  offsetMinutes = DEFAULT_OFFSET_MINUTES,
   fromTrackId,
   toTrackId,
   consigneeId,

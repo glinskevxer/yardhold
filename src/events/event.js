@@ -4,6 +4,7 @@ import { fingerprint } from '../core/ids.js';
 import { formatInstant, parseInstant } from '../time/instant.js';
 import { normalizeCarId } from '../equipment/reportingMarks.js';
 import { eventKind } from './eventTypes.js';
+import { DEFAULT_OFFSET_MINUTES } from '../time/instant.js';
 
 /**
  * One reported event. The source matters as much as the code: a stamp the
@@ -23,7 +24,7 @@ export function trackEvent({
   carId,
   code,
   at,
-  offsetMinutes = -360,
+  offsetMinutes = DEFAULT_OFFSET_MINUTES,
   trackId,
   spot,
   source = EVENT_SOURCE.CARRIER,

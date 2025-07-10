@@ -1,7 +1,7 @@
 import { ValidationError } from '../core/errors.js';
 import { optional, requireOneOf, requireString } from '../core/guards.js';
 import { fingerprint } from '../core/ids.js';
-import { formatInstant, parseInstant } from '../time/instant.js';
+import { DEFAULT_OFFSET_MINUTES, formatInstant, parseInstant } from '../time/instant.js';
 
 /**
  * The audit trail.
@@ -27,7 +27,7 @@ const ACTIONS = Object.values(ACTION);
 export function auditEntry({
   action,
   at,
-  offsetMinutes = -360,
+  offsetMinutes = DEFAULT_OFFSET_MINUTES,
   actor,
   subject,
   inputs = [],

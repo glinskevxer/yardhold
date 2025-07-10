@@ -6,7 +6,7 @@ import {
   periodRegister,
   routeLateEvents,
 } from '../../src/settlement/periodClose.js';
-import { dateAt, parseInstant } from '../../src/time/instant.js';
+import { parseInstant } from '../../src/time/instant.js';
 import { ConflictError, ValidationError } from '../../src/core/errors.js';
 
 const closed = {
@@ -122,31 +122,27 @@ describe('routeLateEvents', () => {
   ];
 
   it('holds the events that land in a closed month', () => {
-    const result = routeLateEvents(register, events, { dateAt });
+    const result = routeLateEvents(register, events);
     expect(result.accepted).toHaveLength(1);
     expect(heldCount(result)).toBe(2);
   });
 
   it('says which period each held event belonged to', () => {
-    const result = routeLateEvents(register, events, { dateAt });
+    const result = routeLateEvents(register, events);
     expect(result.held.every((entry) => entry.period === '202403')).toBe(true);
   });
 
   it('takes them all once the month is reopened', () => {
     const reopened = periodRegister([closed]);
     reopened.reopen('202403', 'late events');
-    expect(routeLateEvents(reopened, events, { dateAt }).held).toEqual([]);
+    expect(routeLateEvents(reopened, events).held).toEqual([]);
   });
 
   it('reads the day at the offset it is given', () => {
     const utc = routeLateEvents(register, [{ at: parseInstant('2024-04-01T02:00Z') }], {
-      dateAt,
       offsetMinutes: 0,
     });
-    const central = routeLateEvents(register, [{ at: parseInstant('2024-04-01T02:00Z') }], {
-      dateAt,
-      offsetMinutes: -360,
-    });
+    const central = routeLateEvents(register, [{ at: parseInstant('2024-04-01T02:00Z') }]);
     expect(utc.accepted).toHaveLength(1);
     expect(central.held).toHaveLength(1);
   });
