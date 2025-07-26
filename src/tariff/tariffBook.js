@@ -2,6 +2,7 @@ import { NotFoundError, ValidationError } from '../core/errors.js';
 import { requireArray, requireString } from '../core/guards.js';
 import { compareDates, formatCivilDate, parseCivilDate } from '../time/civil.js';
 import { tariff } from './tariff.js';
+import { pageAsAmended, supplementSeries } from './amendment.js';
 
 /**
  * The tariff book. Pages are filed against a carrier and optionally a station
@@ -74,10 +75,11 @@ function matches(filing, query) {
   return true;
 }
 
-export function tariffBook(filings = []) {
+export function tariffBook(filings = [], supplements = []) {
   const all = requireArray(filings, 'filings').map((entry) =>
     entry.weight === undefined ? tariffFiling(entry) : entry
   );
+  const series = supplementSeries(supplements);
   const book = {
     get size() {
       return all.length;
@@ -104,6 +106,11 @@ export function tariffBook(filings = []) {
     find(query) {
       return book.filingsFor(query)[0];
     },
+    /**
+     * The page as it stood on the day, supplements and all. A caller that
+     * wants only what was originally filed can read `find().page`, and nothing
+     * in the engine does.
+     */
     resolve(query) {
       const found = book.find(query);
       if (found === undefined) {
@@ -114,7 +121,19 @@ export function tariffBook(filings = []) {
           )}`
         );
       }
-      return found.page;
+      const day = typeof query.on === 'string' ? parseCivilDate(query.on) : query.on;
+      return pageAsAmended(found.page, series, day).page;
+    },
+    amendmentsOn(query) {
+      const found = book.find(query);
+      if (found === undefined) {
+        return [];
+      }
+      const day = typeof query.on === 'string' ? parseCivilDate(query.on) : query.on;
+      return pageAsAmended(found.page, series, day).applied;
+    },
+    supplements() {
+      return [...series];
     },
     pageIds() {
       return [...new Set(all.map((filing) => filing.page.id))].sort();

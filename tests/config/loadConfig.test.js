@@ -61,6 +61,7 @@ describe('loadConfig', () => {
       exclusions: 0,
       commodities: 6,
       waybills: 0,
+      supplements: 0,
     });
   });
 

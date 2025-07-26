@@ -55,7 +55,7 @@ export function loadConfig(document) {
     parties: partyBook(document.parties),
     cars: fleet(document.cars ?? []),
     calendars,
-    tariffs: tariffBook(document.tariffs),
+    tariffs: tariffBook(document.tariffs, document.supplements ?? []),
     switchRates: switchTariff(document.switchRates ?? []),
     agreements,
     orders: orderSchedule(document.orders ?? []),
@@ -103,5 +103,6 @@ export function worldSummary(world) {
     exclusions: world.exclusions.size,
     commodities: world.commodities.size,
     waybills: world.waybills.size,
+    supplements: world.tariffs.supplements().length,
   };
 }

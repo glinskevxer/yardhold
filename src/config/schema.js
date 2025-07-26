@@ -23,6 +23,7 @@ export const SECTIONS = Object.freeze([
   'cars',
   'commodities',
   'waybills',
+  'supplements',
 ]);
 
 const REQUIRED = Object.freeze(['stations', 'tracks', 'parties', 'tariffs']);

@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { explainSelection, tariffBook, tariffFiling } from '../../src/tariff/tariffBook.js';
 import { SERVICE } from '../../src/tariff/freeTimeTable.js';
+import { rateForDay } from '../../src/tariff/rateLadder.js';
 import { NotFoundError, ValidationError } from '../../src/core/errors.js';
+
+const amendmentsFor = (register, on) => register.amendmentsOn({ carrier: 'BNSF', on });
 
 const page = (id, rate) => ({
   id,
@@ -136,6 +139,63 @@ describe('the book itself', () => {
       'DEM-4100',
       'DEM-4000',
     ]);
+  });
+});
+
+describe('supplements laid over the filed page', () => {
+  const amended = tariffBook(
+    [{ page: page('DEM-4000', '150.00'), effectiveFrom: '2024-01-01' }],
+    [
+      {
+        number: 'SUPP-3',
+        pageId: 'DEM-4000',
+        amends: 'ladder',
+        effectiveFrom: '2024-03-01',
+        ladder: [{ fromDay: 1, rate: '200.00' }],
+      },
+      {
+        number: 'SUPP-5',
+        pageId: 'DEM-4000',
+        amends: 'ladder',
+        effectiveFrom: '2024-06-01',
+        ladder: [{ fromDay: 1, rate: '150.00' }],
+      },
+    ]
+  );
+
+  it('resolves the original before the first supplement', () => {
+    expect(rateForDay(amended.resolve({ carrier: 'BNSF', on: '2024-02-01' }).ladder, 1)).toBe(
+      15000
+    );
+    expect(amended.amendmentsOn({ carrier: 'BNSF', on: '2024-02-01' })).toEqual([]);
+  });
+
+  it('resolves the amended page once one is in force', () => {
+    expect(rateForDay(amended.resolve({ carrier: 'BNSF', on: '2024-04-01' }).ladder, 1)).toBe(
+      20000
+    );
+    expect(amendmentsFor(amended, '2024-04-01')).toEqual(['SUPP-3']);
+  });
+
+  it('applies them in order rather than taking the latest', () => {
+    expect(rateForDay(amended.resolve({ carrier: 'BNSF', on: '2024-07-01' }).ladder, 1)).toBe(
+      15000
+    );
+    expect(amendmentsFor(amended, '2024-07-01')).toEqual(['SUPP-3', 'SUPP-5']);
+  });
+
+  it('leaves the filed page untouched', () => {
+    const filing = amended.find({ carrier: 'BNSF', on: '2024-07-01' });
+    expect(rateForDay(filing.page.ladder, 1)).toBe(15000);
+  });
+
+  it('lists what it holds', () => {
+    expect(amended.supplements()).toHaveLength(2);
+    expect(book.supplements()).toEqual([]);
+  });
+
+  it('has no amendments for a carrier it cannot resolve', () => {
+    expect(amended.amendmentsOn({ carrier: 'CSXT', on: '2024-07-01' })).toEqual([]);
   });
 });
 
