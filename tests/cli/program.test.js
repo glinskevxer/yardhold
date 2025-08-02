@@ -79,6 +79,7 @@ describe('buildProgram', () => {
       'invoice',
       'reconcile',
       'report',
+      'statement',
       'validate',
     ]);
   });
@@ -295,6 +296,29 @@ describe('validate', () => {
   });
 });
 
+describe('statement', () => {
+  it('prints the detail behind the invoice', async () => {
+    const rig = harness();
+    const code = await main(['statement', ...common], rig.deps);
+    expect(code).toBe(0);
+    expect(rig.out[0]).toContain('Statement DELTA');
+    expect(rig.out[0]).toContain('BNSF 400123');
+  });
+
+  it('narrows to one consignee', async () => {
+    const rig = harness();
+    await main(['statement', ...common, '-n', 'DELTA'], rig.deps);
+    expect(rig.out[0]).toContain('Statement DELTA');
+  });
+
+  it('reports a consignee with no cars without a stack', async () => {
+    const rig = harness();
+    await main(['statement', ...common, '-n', 'NOBODY'], rig.deps);
+    expect(rig.errs[0]).toMatch(/^validation:/);
+    expect(rig.out).toEqual([]);
+  });
+});
+
 describe('the help', () => {
   it('lists every command through the helper', () => {
     expect(commandNames(buildProgram(harness().deps))).toEqual([
@@ -303,6 +327,7 @@ describe('the help', () => {
       'invoice',
       'reconcile',
       'report',
+      'statement',
       'validate',
     ]);
   });

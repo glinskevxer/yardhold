@@ -29,7 +29,15 @@ export function tariffFiling({
   consigneeId,
   contractId,
 } = {}) {
-  const built = Object.isFrozen(page) && page.freeTime ? page : tariff(page);
+  /**
+   * A page that has been through `tariff()` carries a built ladder rather than
+   * the array it was written as. Testing for frozen alone let a frozen literal
+   * straight through and the ladder blew up four calls later.
+   */
+  const built =
+    page !== undefined && page.ladder !== undefined && !Array.isArray(page.ladder)
+      ? page
+      : tariff(page);
   const from = parseCivilDate(requireString(effectiveFrom, 'effectiveFrom'));
   const to = effectiveTo === undefined ? undefined : parseCivilDate(effectiveTo);
   if (to !== undefined && compareDates(from, to) > 0) {
