@@ -6,6 +6,7 @@ import { runReport } from './commands/report.js';
 import { runReconcile } from './commands/reconcile.js';
 import { runValidate } from './commands/validate.js';
 import { runStatement } from './commands/statement.js';
+import { runSettle } from './commands/settle.js';
 import { reportError, resolveOutput } from './context.js';
 import { emit } from '../io/output.js';
 
@@ -80,6 +81,14 @@ export function buildProgram(deps = {}) {
   shared(program.command('statement').description('the detail behind an invoice'))
     .option('-n, --consignee <id>', 'one consignee rather than all of them')
     .action(guard(runStatement));
+
+  shared(program.command('settle').description('age the open items or show an account'))
+    .requiredOption('-i, --issued-on <date>', 'invoice date')
+    .option('-t, --settle <kind>', 'aging or account', 'aging')
+    .option('-m, --payments <path>', 'remittance advice as CSV')
+    .option('-a, --as-of <date>', 'age as at this date rather than the invoice date')
+    .option('-n, --consignee <id>', 'one consignee rather than all of them')
+    .action(guard(runSettle));
 
   shared(program.command('reconcile').description('compare our count with the carrier bill'))
     .requiredOption('-b, --carrier-invoice <path>', 'the carrier demurrage invoice as CSV')

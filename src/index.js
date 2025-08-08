@@ -78,10 +78,17 @@ export { adjudicate, reopenableInputs } from './disputes/adjudicate.js';
 export { isTimely, filingDeadline, groundsStillOpen } from './disputes/timeLimits.js';
 export { creditMemo, allocateOverCars } from './disputes/creditMemo.js';
 
-export { payment, applyPayment, applyAll } from './settlement/payment.js';
+export { payment, applyPayment, applyAll, invoicesFor } from './settlement/payment.js';
 export { ageInvoices, bucketTotals } from './settlement/aging.js';
 export { writeOff, WRITE_OFF_REASON } from './settlement/writeoff.js';
 export { statementOfAccount, accountText } from './settlement/statementOfAccount.js';
+export {
+  periodRecord,
+  periodRegister,
+  routeLateEvents,
+  PERIOD_STATE,
+} from './settlement/periodClose.js';
+export { readRemittance, readRemittanceRows, REMITTANCE_COLUMNS } from './io/remittance.js';
 
 export { statement, statementText } from './reporting/statement.js';
 export { exceptionReport, EXCEPTION } from './reporting/exceptions.js';

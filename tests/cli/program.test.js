@@ -79,6 +79,7 @@ describe('buildProgram', () => {
       'invoice',
       'reconcile',
       'report',
+      'settle',
       'statement',
       'validate',
     ]);
@@ -327,6 +328,7 @@ describe('the help', () => {
       'invoice',
       'reconcile',
       'report',
+      'settle',
       'statement',
       'validate',
     ]);

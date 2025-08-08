@@ -101,13 +101,26 @@ export function applyPayment(record, invoices, balances = new Map()) {
   return { paymentId: record.id, applications, unapplied: remaining, balances };
 }
 
+export function invoicesFor(consigneeId, invoices) {
+  return invoices.filter((entry) => entry.consigneeId === consigneeId);
+}
+
+/**
+ * A batch of payments against a batch of invoices.
+ *
+ * Each payment only ever sees its own consignee's invoices. ``applyPayment`` is
+ * the primitive and deliberately applies to whatever it is handed, which is
+ * right for a single remittance the caller has already scoped; handing it the
+ * whole month unfiltered would let one consignee's cheque close another
+ * consignee's invoice and balance perfectly while doing it.
+ */
 export function applyAll(payments, invoices) {
   const balances = new Map(invoices.map((entry) => [entry.number, entry.total]));
   const results = [];
   for (const record of [...payments].sort((a, b) =>
     compareDates(parseCivilDate(a.receivedOn), parseCivilDate(b.receivedOn))
   )) {
-    results.push(applyPayment(record, invoices, balances));
+    results.push(applyPayment(record, invoicesFor(record.consigneeId, invoices), balances));
   }
   return { results, balances };
 }

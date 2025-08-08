@@ -3,6 +3,7 @@ import {
   APPLICATION,
   applyAll,
   applyPayment,
+  invoicesFor,
   openInvoiceNumbers,
   payment,
   totalApplied,
@@ -10,9 +11,9 @@ import {
 import { ValidationError } from '../../src/core/errors.js';
 
 const invoices = [
-  { number: 'INV-202401-00001', issuedOn: '2024-02-05', total: 30000 },
-  { number: 'INV-202402-00002', issuedOn: '2024-03-05', total: 10000 },
-  { number: 'INV-202403-00003', issuedOn: '2024-04-05', total: 50000 },
+  { number: 'INV-202401-00001', consigneeId: 'DELTA', issuedOn: '2024-02-05', total: 30000 },
+  { number: 'INV-202402-00002', consigneeId: 'DELTA', issuedOn: '2024-03-05', total: 10000 },
+  { number: 'INV-202403-00003', consigneeId: 'DELTA', issuedOn: '2024-04-05', total: 50000 },
 ];
 
 const base = { consigneeId: ' delta ', receivedOn: '2024-04-20', amount: 40000 };
@@ -149,5 +150,44 @@ describe('applyAll', () => {
     const { results, balances } = applyAll([], invoices);
     expect(results).toEqual([]);
     expect(openInvoiceNumbers(balances)).toHaveLength(3);
+  });
+
+  it('never lets one consignee pay the invoice of another', () => {
+    const acme = [
+      { number: 'INV-202401-00009', consigneeId: 'ACME', issuedOn: '2024-02-05', total: 20000 },
+    ];
+    const record = payment({ consigneeId: 'ACME', receivedOn: '2024-04-20', amount: 60000 });
+    const { results, balances } = applyAll([record], [...invoices, ...acme]);
+
+    expect(balances.get('INV-202401-00009')).toBe(0);
+    expect(openInvoiceNumbers(balances)).toEqual([
+      'INV-202401-00001',
+      'INV-202402-00002',
+      'INV-202403-00003',
+    ]);
+    expect(results[0].unapplied).toBe(40000);
+  });
+
+  it('leaves the money unapplied rather than guessing when the payer is unknown', () => {
+    const record = payment({ consigneeId: 'NOBODY', receivedOn: '2024-04-20', amount: 5000 });
+    const { results, balances } = applyAll([record], invoices);
+
+    expect(results[0].applications).toEqual([]);
+    expect(results[0].unapplied).toBe(5000);
+    expect(openInvoiceNumbers(balances)).toHaveLength(3);
+  });
+});
+
+describe('invoicesFor', () => {
+  it('picks out one consignee and keeps the order', () => {
+    expect(invoicesFor('DELTA', invoices).map((entry) => entry.number)).toEqual([
+      'INV-202401-00001',
+      'INV-202402-00002',
+      'INV-202403-00003',
+    ]);
+  });
+
+  it('gives nothing back for a consignee with no invoices', () => {
+    expect(invoicesFor('ACME', invoices)).toEqual([]);
   });
 });
