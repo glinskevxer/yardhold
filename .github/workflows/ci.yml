@@ -98,6 +98,8 @@ jobs:
         run: node bin/spurtally.js invoice -c examples/memphis-north.json -e examples/march-2024.csv -p 202403 -r BNSF -i 2024-04-05
       - name: report
         run: node bin/spurtally.js report -c examples/memphis-north.json -e examples/march-2024.csv -p 202403 -r BNSF -t kpi
+      - name: fleet
+        run: node bin/spurtally.js fleet -c examples/memphis-north.json -a 2024-03-31 --flagged
       - name: register
         run: node bin/spurtally.js report -c examples/memphis-north.json -e examples/march-2024.csv -p 202403 -r BNSF -t register
       - name: reconcile

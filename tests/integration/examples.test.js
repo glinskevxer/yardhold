@@ -38,6 +38,8 @@ describe('the shipped example configuration', () => {
       commodities: 6,
       waybills: 2,
       supplements: 0,
+      leases: 1,
+      scaleTickets: 2,
     });
   });
 

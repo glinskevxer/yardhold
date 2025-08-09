@@ -12,6 +12,8 @@ import { exclusionRegistry } from '../exclusions/registry.js';
 import { hireBook } from '../storage/perDiem.js';
 import { STANDARD_COMMODITIES, commodityBook } from '../tariff/commodity.js';
 import { waybillBook } from '../events/waybill.js';
+import { lease } from '../equipment/lease.js';
+import { scaleTicket } from '../equipment/scaleTicket.js';
 import { checkDocument, settingsOf } from './schema.js';
 
 /**
@@ -63,6 +65,12 @@ export function loadConfig(document) {
     hireRates: hireBook(document.hireRates ?? []),
     commodities: commodityBook(document.commodities ?? STANDARD_COMMODITIES),
     waybills: waybillBook(document.waybills ?? []),
+    leases: (document.leases ?? []).map((entry) =>
+      entry.term === undefined ? lease(entry) : entry
+    ),
+    scaleTickets: (document.scaleTickets ?? []).map((entry) =>
+      entry.netPounds === undefined ? scaleTicket(entry) : entry
+    ),
   });
 }
 
@@ -76,6 +84,19 @@ export function calendarFor(world, splc) {
     throw new NotFoundError('calendar', station.calendarId);
   }
   return calendar;
+}
+
+/** Every lease a car names, newest term first. A car names at most one. */
+export function leasesForCar(world, carId) {
+  const record = world.cars.find(carId);
+  if (record === undefined || record.leaseId === undefined) {
+    return [];
+  }
+  return world.leases.filter((entry) => entry.id === record.leaseId);
+}
+
+export function ticketsFor(world, carId) {
+  return world.scaleTickets.filter((entry) => entry.carId === carId);
 }
 
 export function agreementFor(world, consigneeId) {
@@ -104,5 +125,7 @@ export function worldSummary(world) {
     commodities: world.commodities.size,
     waybills: world.waybills.size,
     supplements: world.tariffs.supplements().length,
+    leases: world.leases.length,
+    scaleTickets: world.scaleTickets.length,
   };
 }

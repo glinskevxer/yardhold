@@ -62,6 +62,8 @@ describe('loadConfig', () => {
       commodities: 6,
       waybills: 0,
       supplements: 0,
+      leases: 0,
+      scaleTickets: 0,
     });
   });
 

@@ -29,6 +29,7 @@ spurtally invoice -c world.json -e march.csv -p 202403 -r BNSF -i 2024-04-05
 spurtally explain -c world.json -e march.csv -p 202403 -r BNSF -k "BNSF 400123"
 spurtally report  -c world.json -e march.csv -p 202403 -r BNSF -t kpi
 spurtally reconcile -c world.json -e march.csv -p 202403 -r BNSF -b carrier.csv
+spurtally fleet     -c world.json -a 2024-03-31 --flagged
 spurtally validate  -c world.json --strict
 ```
 
@@ -41,6 +42,10 @@ the rate ladder.
 
 `reconcile` puts our count beside the carrier's own invoice and names every
 disagreement, which is the thing this was written for.
+
+`fleet` and `validate` take no event feed. They read the standing state of the
+equipment and the configuration, which is a different question from what
+happened in a month.
 
 A worked configuration, a month of events and the carrier's invoice for the same
 month are in `examples/`.

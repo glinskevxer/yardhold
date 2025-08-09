@@ -6,6 +6,7 @@ import { runReport } from './commands/report.js';
 import { runReconcile } from './commands/reconcile.js';
 import { runValidate } from './commands/validate.js';
 import { runStatement } from './commands/statement.js';
+import { runFleet } from './commands/fleet.js';
 import { runSettle } from './commands/settle.js';
 import { reportError, resolveOutput } from './context.js';
 import { emit } from '../io/output.js';
@@ -97,6 +98,17 @@ export function buildProgram(deps = {}) {
     .action(guard(runReconcile));
 
   program
+    .command('fleet')
+    .description('the register, the leases and the weights')
+    .requiredOption('-c, --config <path>', 'configuration document')
+    .requiredOption('-a, --as-of <date>', 'the day to read the leases on')
+    .option('-o, --output <format>', 'table, csv or json', 'table')
+    .option('--out <path>', 'write to a file rather than to the terminal')
+    .option('-k, --car <id>', 'one car rather than the whole register')
+    .option('-f, --flagged', 'only the cars with something wrong')
+    .action(guard(runFleet));
+
+  program
     .command('validate')
     .description('check a configuration on its own')
     .requiredOption('-c, --config <path>', 'configuration document')
@@ -118,6 +130,7 @@ export function buildProgram(deps = {}) {
       '  spurtally report  -c world.json -e march.csv -p 202403 -r BNSF -t kpi',
       '  spurtally reconcile -c world.json -e march.csv -p 202403 -r BNSF -b carrier.csv',
       '  spurtally statement -c world.json -e march.csv -p 202403 -r BNSF -n DELTA',
+      '  spurtally fleet -c world.json -a 2024-03-31 --flagged',
       '  spurtally validate -c world.json --strict',
       '',
       'A period is written YYYYMM and selects the tariff page in force on the day',

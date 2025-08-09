@@ -76,6 +76,7 @@ describe('buildProgram', () => {
     expect(program.commands.map((command) => command.name()).sort()).toEqual([
       'assess',
       'explain',
+      'fleet',
       'invoice',
       'reconcile',
       'report',
@@ -325,6 +326,7 @@ describe('the help', () => {
     expect(commandNames(buildProgram(harness().deps))).toEqual([
       'assess',
       'explain',
+      'fleet',
       'invoice',
       'reconcile',
       'report',
@@ -336,7 +338,8 @@ describe('the help', () => {
 
   it('gives every month command the shared options', () => {
     const program = buildProgram(harness().deps);
-    for (const name of commandNames(program).filter((entry) => entry !== 'validate')) {
+    const configOnly = ['validate', 'fleet'];
+    for (const name of commandNames(program).filter((entry) => !configOnly.includes(entry))) {
       const options = optionsOf(program, name);
       expect(options).toContain('--config');
       expect(options).toContain('--events');
@@ -351,6 +354,15 @@ describe('the help', () => {
     expect(options).toContain('--config');
     expect(options).toContain('--strict');
     expect(options).not.toContain('--events');
+  });
+
+  it('gives fleet the config and a day but no event feed', () => {
+    const options = optionsOf(buildProgram(harness().deps), 'fleet');
+    expect(options).toContain('--config');
+    expect(options).toContain('--as-of');
+    expect(options).toContain('--flagged');
+    expect(options).not.toContain('--events');
+    expect(options).not.toContain('--period');
   });
 
   it('gives invoice its issue date and explain its car', () => {

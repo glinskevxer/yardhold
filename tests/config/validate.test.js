@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   SEVERITY,
   checkAgreements,
+  checkEquipment,
   checkParties,
   checkTariffs,
   checkTracks,
@@ -180,6 +181,76 @@ describe('checkTariffs', () => {
     expect(checkTariffs(world).some((entry) => entry.code === 'tariff-consignee-missing')).toBe(
       true
     );
+  });
+});
+
+describe('checkEquipment', () => {
+  const withGear = {
+    ...sound,
+    cars: [
+      { id: 'GATX 77', designation: 'T', leaseId: 'L-1' },
+      { id: 'GATX 88', designation: 'T', leaseId: 'L-GONE' },
+    ],
+    leases: [
+      { id: 'L-1', lessee: 'Delta', lessor: 'GATX', from: '2024-01-01', to: '2026-12-31' },
+      { id: 'L-SPARE', lessee: 'Delta', lessor: 'GATX', from: '2024-01-01', to: '2026-12-31' },
+    ],
+    scaleTickets: [
+      {
+        number: 'ST-1',
+        carId: 'CN 90',
+        weighedOn: '2024-03-05',
+        method: 'agreed',
+        grossPounds: 240000,
+        tarePounds: 70000,
+      },
+    ],
+  };
+
+  it('catches a car naming a lease nobody filed', () => {
+    const found = checkEquipment(loadConfig(withGear));
+    const entry = found.find((item) => item.code === 'lease-missing');
+    expect(entry.where).toBe('GATX 88');
+    expect(entry.severity).toBe(SEVERITY.ERROR);
+  });
+
+  it('warns about a ticket for a car that is not on the register', () => {
+    const found = checkEquipment(loadConfig(withGear));
+    const entry = found.find((item) => item.code === 'ticket-car-missing');
+    expect(entry.where).toBe('ST-1');
+    expect(entry.severity).toBe(SEVERITY.WARNING);
+  });
+
+  it('warns about a lease no car names', () => {
+    const found = checkEquipment(loadConfig(withGear));
+    expect(
+      found.filter((item) => item.code === 'lease-has-no-car').map((item) => item.where)
+    ).toEqual(['L-SPARE']);
+  });
+
+  it('says nothing about a configuration with no equipment sections at all', () => {
+    expect(checkEquipment(loadConfig(sound))).toEqual([]);
+  });
+
+  it('says nothing when every reference lines up', () => {
+    const tidy = {
+      ...sound,
+      cars: [{ id: 'GATX 77', designation: 'T', leaseId: 'L-1' }],
+      leases: [
+        { id: 'L-1', lessee: 'Delta', lessor: 'GATX', from: '2024-01-01', to: '2026-12-31' },
+      ],
+      scaleTickets: [
+        {
+          number: 'ST-1',
+          carId: 'GATX 77',
+          weighedOn: '2024-03-05',
+          method: 'agreed',
+          grossPounds: 240000,
+          tarePounds: 70000,
+        },
+      ],
+    };
+    expect(checkEquipment(loadConfig(tidy))).toEqual([]);
   });
 });
 

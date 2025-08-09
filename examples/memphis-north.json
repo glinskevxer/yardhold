@@ -69,12 +69,17 @@
     },
     {
       "id": "UP 512004",
-      "designation": "LO"
+      "designation": "LO",
+      "capacityPounds": 200000,
+      "lightWeightPounds": 62000
     },
     {
       "id": "GATX 77",
       "designation": "T",
-      "ownerName": "Delta Chemical Company"
+      "ownerName": "Delta Chemical Company",
+      "leaseId": "L-2024-11",
+      "capacityPounds": 190000,
+      "lightWeightPounds": 66000
     }
   ],
   "agreements": [
@@ -240,6 +245,42 @@
       "consigneeId": "DELTA",
       "route": ["UP", "BNSF"],
       "hazmatPlacard": "UN1824"
+    }
+  ],
+  "leases": [
+    {
+      "id": "L-2024-11",
+      "kind": "net",
+      "lessee": "Delta Chemical Company",
+      "lessor": "General American Marks Company",
+      "from": "2023-07-01",
+      "to": "2026-06-30",
+      "monthlyRent": "1250.00",
+      "mileageAllowance": "18000",
+      "mileageRate": "0.0425",
+      "freeStorageDays": 2,
+      "repairSharePercent": 50
+    }
+  ],
+  "scaleTickets": [
+    {
+      "number": "ST-4411",
+      "carId": "UP 512004",
+      "weighedOn": "2024-03-06",
+      "method": "track-scale",
+      "grossPounds": 258400,
+      "tarePounds": 62000,
+      "scaleId": "MEM-1",
+      "certificateExpiresOn": "2024-12-31",
+      "weighedBy": "r.okafor"
+    },
+    {
+      "number": "ST-4478",
+      "carId": "GATX 77",
+      "weighedOn": "2024-03-11",
+      "method": "agreed",
+      "grossPounds": 244000,
+      "tarePounds": 66000
     }
   ]
 }

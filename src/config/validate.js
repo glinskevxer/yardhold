@@ -130,6 +130,41 @@ export function checkTariffs(world) {
   return found;
 }
 
+/**
+ * Equipment. Surfacing the leases and the scale tickets in a command turned up
+ * two cross references nothing had ever checked: a car can name a lease that
+ * was never filed, and a ticket can be filed against a car that is not on the
+ * register. Both read as "no weight" and "no lease" downstream, which is
+ * indistinguishable from the car simply not having one.
+ */
+export function checkEquipment(world) {
+  const found = [];
+  const byId = new Map(world.leases.map((entry) => [entry.id, entry]));
+  for (const record of world.cars.all()) {
+    if (record.leaseId !== undefined && !byId.has(record.leaseId)) {
+      found.push(problem(SEVERITY.ERROR, 'lease-missing', `no lease ${record.leaseId}`, record.id));
+    }
+  }
+  for (const ticket of world.scaleTickets) {
+    if (!world.cars.has(ticket.carId)) {
+      found.push(
+        problem(
+          SEVERITY.WARNING,
+          'ticket-car-missing',
+          `no car ${ticket.carId} on the register`,
+          ticket.number
+        )
+      );
+    }
+  }
+  for (const entry of world.leases) {
+    if (world.cars.filter((record) => record.leaseId === entry.id).length === 0) {
+      found.push(problem(SEVERITY.WARNING, 'lease-has-no-car', 'no car names it', entry.id));
+    }
+  }
+  return found;
+}
+
 export function validateWorld(world) {
   requireObject(world, 'world');
   return [
@@ -137,6 +172,7 @@ export function validateWorld(world) {
     ...checkParties(world),
     ...checkAgreements(world),
     ...checkTariffs(world),
+    ...checkEquipment(world),
   ].sort(
     (a, b) =>
       (a.severity === SEVERITY.ERROR ? 0 : 1) - (b.severity === SEVERITY.ERROR ? 0 : 1) ||
