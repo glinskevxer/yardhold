@@ -36,9 +36,11 @@ spurtally validate  -c world.json --strict
 Every command takes `-o table|csv|json` and `--out <path>` to write to a file
 instead of the terminal. The file extension has to agree with the format.
 
-`report` runs one of `exceptions`, `kpi`, `dwell` or `register`. The register is
+`report` runs one of `exceptions`, `kpi`, `dwell`, `register` or `trips`. The register is
 a grid of car against day, one character per cell, showing where each day sat on
-the rate ladder.
+the rate ladder. `trips` reads the event feed rather than the assessment, so it
+shows cars that arrived, were never placed and left again, which have no
+assessment at all.
 
 `reconcile` puts our count beside the carrier's own invoice and names every
 disagreement, which is the thing this was written for.
