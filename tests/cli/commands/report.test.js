@@ -3,6 +3,8 @@ import {
   REPORT,
   dwellBody,
   registerBody,
+  capacityBody,
+  placementRecords,
   tripRows,
   tripsBody,
   exceptionsBody,
@@ -12,7 +14,8 @@ import {
 } from '../../../src/cli/commands/report.js';
 import { OUTPUT } from '../../../src/cli/format.js';
 import { ValidationError } from '../../../src/core/errors.js';
-import { makeReadFile, sampleOptions } from '../../fixtures/world.js';
+import { loadConfig } from '../../../src/config/loadConfig.js';
+import { makeReadFile, sampleDocument, sampleOptions } from '../../fixtures/world.js';
 
 const feed = [
   'car,event,event_time,track',
@@ -202,6 +205,137 @@ describe('the trips report', () => {
   });
 });
 
+describe('the capacity report', () => {
+  const world = loadConfig(sampleDocument());
+
+  it('turns every stand into a placed and released pair of days', () => {
+    const records = placementRecords(result);
+    expect(records).toEqual([
+      { carId: 'BNSF 400123', trackId: 'IT-9', placedOn: '2024-03-04', releasedOn: '2024-03-08' },
+    ]);
+  });
+
+  it('releases a car still standing at the cut off rather than leaving it open', () => {
+    const open = runReport(
+      { ...options, events: 'open.csv' },
+      {
+        readFile: makeReadFile({
+          extra: {
+            'open.csv': [
+              'car,event,event_time,track',
+              'BNSF 400123,AP,2024-03-04T00:00,IT-9',
+              '',
+            ].join('\n'),
+          },
+        }),
+      }
+    );
+    expect(placementRecords(open.result)[0].releasedOn).toBe('2024-04-01');
+  });
+
+  it('counts that car as present for the rest of the month', () => {
+    const open = runReport(
+      { ...options, events: 'open.csv' },
+      {
+        readFile: makeReadFile({
+          extra: {
+            'open.csv': [
+              'car,event,event_time,track',
+              'BNSF 400123,AP,2024-03-04T00:00,IT-9',
+              '',
+            ].join('\n'),
+          },
+        }),
+      }
+    );
+    const parsed = JSON.parse(capacityBody(world, open.result, OUTPUT.JSON));
+    const rows = parsed.tracks[0].rows;
+    expect(rows.find((row) => row.date === '2024-03-31').cars).toBe(1);
+    expect(rows.find((row) => row.date === '2024-03-03').cars).toBe(0);
+  });
+
+  it('leaves the release open when nothing closed it and no cut off was given', () => {
+    const loose = {
+      assessments: [{ carId: 'A', detentions: [{ placedAt: 0, trackId: 'IT-9' }] }],
+    };
+    expect(placementRecords(loose)[0].releasedOn).toBeUndefined();
+  });
+
+  it('leaves out a stand with no track', () => {
+    const loose = { assessments: [{ carId: 'A', detentions: [{ placedAt: 0 }] }] };
+    expect(placementRecords(loose)).toEqual([]);
+  });
+
+  it('counts the peak and the days the track was full', () => {
+    const text = capacityBody(world, result, OUTPUT.TABLE);
+    expect(text).toContain('IT-9');
+    expect(text).toContain('DELTA');
+  });
+
+  it('reports every industry track, even an empty one', () => {
+    const parsed = JSON.parse(capacityBody(world, result, OUTPUT.JSON));
+    expect(parsed.tracks.map((entry) => entry.track)).toEqual(['IT-9']);
+    expect(parsed.window).toEqual({ from: '2024-03-01', to: '2024-03-31' });
+  });
+
+  it('leaves the hold track out, since nothing is consigned to it', () => {
+    const withHold = loadConfig(
+      sampleDocument({
+        tracks: [
+          {
+            id: 'IT-9',
+            splc: '412300',
+            name: 'Delta lead',
+            capacityCars: 6,
+            consigneeId: 'DELTA',
+          },
+          { id: 'HT-1', splc: '412300', name: 'North hold', role: 'hold', capacityCars: 20 },
+        ],
+      })
+    );
+    const parsed = JSON.parse(capacityBody(withHold, result, OUTPUT.JSON));
+    expect(parsed.tracks.map((entry) => entry.track)).toEqual(['IT-9']);
+  });
+
+  it('names the days a track was full', () => {
+    const tight = loadConfig(
+      sampleDocument({
+        tracks: [
+          {
+            id: 'IT-9',
+            splc: '412300',
+            name: 'Delta lead',
+            capacityCars: 1,
+            consigneeId: 'DELTA',
+          },
+        ],
+      })
+    );
+    const text = capacityBody(tight, result, OUTPUT.TABLE);
+    expect(text).toContain('full on');
+    expect(text).toContain('2024-03-04');
+  });
+
+  it('writes a CSV in a fixed column order', () => {
+    expect(capacityBody(world, result, OUTPUT.CSV).split('\n')[0]).toBe(
+      'track,consignee,capacity,peak,average,utilisation,fullDays'
+    );
+  });
+
+  it('says so when there is no industry track at all', () => {
+    const yardOnly = loadConfig(
+      sampleDocument({
+        tracks: [
+          { id: 'HT-1', splc: '412300', name: 'North hold', role: 'hold', capacityCars: 20 },
+        ],
+      })
+    );
+    expect(capacityBody(yardOnly, result, OUTPUT.TABLE)).toBe(
+      'no industry track in the configuration'
+    );
+  });
+});
+
 describe('reportBody', () => {
   it('dispatches on the kind', () => {
     expect(reportBody(REPORT.EXCEPTIONS, result, OUTPUT.TABLE)).toContain('not-assessed');
@@ -244,6 +378,10 @@ describe('runReport', () => {
         expect(error.message).toContain(kind);
       }
     }
+  });
+
+  it('runs the capacity report', () => {
+    expect(runReport({ ...options, report: 'capacity' }, { readFile }).text).toContain('IT-9');
   });
 
   it('runs the trips report', () => {

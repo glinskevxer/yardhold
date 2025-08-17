@@ -6,7 +6,15 @@ import { assessmentKpis, reliefKpis } from '../../reporting/kpi.js';
 import { dwellSummary, fromDetentions, toDays } from '../../reporting/dwell.js';
 import { buildRegister, registerRows, registerText } from '../../reporting/register.js';
 import { openTrips, repeatVisitors, tripMinutes, tripsByCar } from '../../events/carTrip.js';
-import { DEFAULT_OFFSET_MINUTES, formatInstant } from '../../time/instant.js';
+import {
+  averageOccupancy,
+  fullDays,
+  peakOccupancy,
+  trackOccupancy,
+  utilisation,
+} from '../../site/capacity.js';
+import { DEFAULT_OFFSET_MINUTES, dateAt, formatInstant } from '../../time/instant.js';
+import { formatCivilDate } from '../../time/civil.js';
 import { OUTPUT, keyValueBlock, plainMoney, renderRows } from '../format.js';
 import { loadRun } from '../context.js';
 
@@ -29,6 +37,7 @@ export const REPORT = Object.freeze({
   DWELL: 'dwell',
   REGISTER: 'register',
   TRIPS: 'trips',
+  CAPACITY: 'capacity',
 });
 
 const REPORTS = Object.values(REPORT);
@@ -180,7 +189,94 @@ export function tripsBody(events, output, offsetMinutes) {
   ].join('\n');
 }
 
-export function reportBody(kind, result, output, { events = [], offsetMinutes } = {}) {
+/**
+ * Every stand the assessment found, as a placed-and-released pair of civil
+ * days. This is the shape `site/capacity.js` has always wanted and nothing had
+ * ever handed it: an occupancy count is about which days a car sat on a track,
+ * not about what it was charged for sitting there.
+ */
+export function placementRecords(result, offsetMinutes = DEFAULT_OFFSET_MINUTES) {
+  return result.assessments.flatMap((assessment) =>
+    assessment.detentions
+      .filter((detention) => detention.trackId !== undefined && detention.placedAt !== undefined)
+      .map((detention) => ({
+        carId: assessment.carId,
+        trackId: detention.trackId,
+        placedOn: formatCivilDate(dateAt(detention.placedAt, offsetMinutes)),
+        releasedOn:
+          detention.releasedAt === undefined
+            ? undefined
+            : formatCivilDate(dateAt(detention.releasedAt, offsetMinutes)),
+      }))
+  );
+}
+
+export function capacityBody(world, result, output, offsetMinutes) {
+  const placements = placementRecords(result, offsetMinutes);
+  const window = { from: result.bounds.firstDay, to: result.bounds.lastDay };
+  const tracks = world.tracks.all().filter((track) => track.role === 'industry');
+  const summaries = tracks.map((track) => {
+    const rows = trackOccupancy(track, placements, window);
+    return {
+      track: track.id,
+      consignee: track.consigneeId ?? '',
+      capacity: track.capacityCars,
+      peak: peakOccupancy(rows),
+      average: averageOccupancy(rows),
+      utilisation: utilisation(rows),
+      fullDays: fullDays(rows).length,
+      rows,
+    };
+  });
+  if (output === OUTPUT.JSON) {
+    return JSON.stringify({ period: result.period, window, tracks: summaries }, null, 2);
+  }
+  const table = summaries.map((entry) => ({
+    track: entry.track,
+    consignee: entry.consignee,
+    capacity: entry.capacity,
+    peak: entry.peak,
+    average: entry.average,
+    utilisation: entry.utilisation,
+    fullDays: entry.fullDays,
+  }));
+  if (output === OUTPUT.CSV) {
+    return renderRows(table, OUTPUT.CSV, [
+      'track',
+      'consignee',
+      'capacity',
+      'peak',
+      'average',
+      'utilisation',
+      'fullDays',
+    ]);
+  }
+  if (table.length === 0) {
+    return 'no industry track in the configuration';
+  }
+  const crowded = summaries.filter((entry) => entry.fullDays > 0);
+  const lines = [
+    renderRows(table, OUTPUT.TABLE, [
+      'track',
+      'consignee',
+      'capacity',
+      'peak',
+      'average',
+      'utilisation',
+      'fullDays',
+    ]),
+  ];
+  if (crowded.length > 0) {
+    lines.push('');
+    lines.push('full on');
+    for (const entry of crowded) {
+      lines.push(`  ${entry.track}  ${fullDays(entry.rows).join(' ')}`);
+    }
+  }
+  return lines.join('\n');
+}
+
+export function reportBody(kind, result, output, { events = [], offsetMinutes, world } = {}) {
   requireOneOf(kind, REPORTS, 'report');
   if (kind === REPORT.EXCEPTIONS) {
     return exceptionsBody(result, output);
@@ -193,6 +289,9 @@ export function reportBody(kind, result, output, { events = [], offsetMinutes } 
   }
   if (kind === REPORT.TRIPS) {
     return tripsBody(events, output, offsetMinutes);
+  }
+  if (kind === REPORT.CAPACITY) {
+    return capacityBody(world, result, output, offsetMinutes);
   }
   return dwellBody(result, output);
 }
@@ -207,6 +306,7 @@ export function runReport(options, deps = {}) {
     text: reportBody(kind, result, context.output, {
       events: feed.events,
       offsetMinutes: context.world.settings.offsetMinutes,
+      world: context.world,
     }),
     result,
     feed,
