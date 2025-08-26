@@ -22,10 +22,11 @@ import { relieveSpan } from '../exclusions/apply.js';
 
 export function countChargeableDays(
   detention,
-  { page, calendar, exclusions = [], query, startIndex = 1 } = {}
+  { page, calendar, exclusions = [], query, startIndex = 1, extraFreeDays = 0 } = {}
 ) {
   requireObject(page, 'page');
   requireInteger(startIndex, 'startIndex', { min: 1 });
+  requireInteger(extraFreeDays, 'extraFreeDays', { min: 0 });
   if (detention.span === undefined) {
     return emptyCount(startIndex);
   }
@@ -39,7 +40,13 @@ export function countChargeableDays(
   const options = { ...chargeableUnitOptions(page), offsetMinutes };
   const units = relief.pieces.flatMap((piece) => dayUnits(piece, options));
   const serviceOnly = freeTimeCountsServiceDays(page, query);
-  const allowance = freeTimeFor(page, query);
+  /**
+   * Relief granted on top of the tariff allowance. Bunching is the only source
+   * today. It is added to the allowance rather than subtracted from the count
+   * so that an unused bonus still reads as unused free time, which is what an
+   * average agreement pays a credit on.
+   */
+  const allowance = freeTimeFor(page, query) + extraFreeDays;
 
   const free = [];
   const charged = [];

@@ -94,6 +94,34 @@ describe('the same drift lands differently depending on the group', () => {
   });
 });
 
+describe('a group of one is never bunched', () => {
+  it('gives nothing to a lone car however late it was', () => {
+    const matches = matchesFor([placed('A', '2024-03-06')]);
+    expect(matches[0].drift).toBe(2);
+    const relieved = bunchingRelief(matches, { page: relieving, schedule });
+    expect(extraFreeDaysFor(relieved, 'A')).toBe(0);
+    expect(relieved[0].why).toBe('not oversupplied');
+  });
+
+  it('gives nothing to a lone car on a day nothing was ordered for', () => {
+    const bare = orderSchedule([
+      { consigneeId: 'DELTA', splc: '412300', wantedOn: '2024-03-04', cars: 1 },
+    ]);
+    const matches = matchPlacements([placed('A', '2024-03-09')], bare);
+    const relieved = bunchingRelief(matches, { page: relieving, schedule: bare });
+    expect(extraFreeDaysFor(relieved, 'A')).toBe(0);
+  });
+
+  it('relieves the same car once a second one lands with it', () => {
+    const bare = orderSchedule([
+      { consigneeId: 'DELTA', splc: '412300', wantedOn: '2024-03-04', cars: 1 },
+    ]);
+    const matches = matchPlacements([placed('A', '2024-03-09'), placed('B', '2024-03-09')], bare);
+    const relieved = bunchingRelief(matches, { page: relieving, schedule: bare });
+    expect(extraFreeDaysFor(relieved, 'A')).toBeGreaterThan(0);
+  });
+});
+
 describe('the cap', () => {
   const longSchedule = orderSchedule([
     { consigneeId: 'DELTA', splc: '412300', wantedOn: '2024-03-01', cars: 1 },

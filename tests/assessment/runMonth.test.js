@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   assessMonth,
+  resolveCar,
   assessmentsFor,
   consigneesIn,
   monthTotal,
@@ -246,6 +247,164 @@ describe('suspensions reported in the feed', () => {
     ]);
     const result = assessMonth(world, plain, { period: '202403', carrier: 'BNSF' });
     expect(result.assessments[0].suspensions).toEqual([]);
+  });
+});
+
+describe('the waybill is read on the day the car was placed', () => {
+  const withLateBill = loadConfig({
+    settings: { years: [2024] },
+    stations: [{ splc: '412300', name: 'Memphis North', carrier: 'BNSF' }],
+    tracks: [
+      { id: 'IT-9', splc: '412300', name: 'Delta lead', capacityCars: 6, consigneeId: 'DELTA' },
+    ],
+    parties: [{ id: 'DELTA', name: 'Delta Chemical', noticeAddress: 'a@b.example' }],
+    cars: [{ id: 'BNSF 400123', designation: 'XM' }],
+    waybills: [
+      {
+        number: 'WB-1',
+        carId: 'BNSF 400123',
+        movement: 'inbound-loaded',
+        billedOn: '2024-03-02',
+        commodityCode: '0113210',
+        netWeightPounds: 190000,
+      },
+    ],
+    tariffs: [
+      {
+        page: {
+          id: 'DEM-4000',
+          carrier: 'BNSF',
+          notificationRequired: false,
+          ladder: [{ fromDay: 1, rate: '150.00' }],
+          freeTime: [
+            { service: SERVICE.UNLOADING, days: 1 },
+            { service: SERVICE.UNLOADING, days: 4, commodityClass: 'GRAIN' },
+          ],
+        },
+        effectiveFrom: '2024-01-01',
+      },
+    ],
+  });
+
+  const events = build([
+    { carId: 'BNSF 400123', code: 'AP', at: '2024-03-04T00:00', trackId: 'IT-9' },
+    { carId: 'BNSF 400123', code: 'REL', at: '2024-03-08T00:00' },
+  ]);
+
+  it('finds a waybill billed after the first of the month', () => {
+    const result = assessMonth(withLateBill, events, { period: '202403', carrier: 'BNSF' });
+    expect(result.assessments[0].commodityClass).toBe('GRAIN');
+  });
+
+  it('spends the commodity allowance rather than the bare one', () => {
+    const result = assessMonth(withLateBill, events, { period: '202403', carrier: 'BNSF' });
+    expect(result.assessments[0].chargeableDays).toBe(0);
+  });
+
+  it('records the day it read the waybill on', () => {
+    const entry = resolveCar(withLateBill, 'BNSF 400123', events, {
+      carrier: 'BNSF',
+      bounds: periodBounds('202403'),
+    });
+    expect(entry.placedOn).toBe('2024-03-04');
+  });
+
+  it('falls back to the first of the month when the car was never placed', () => {
+    const entry = resolveCar(
+      withLateBill,
+      'BNSF 400123',
+      build([{ carId: 'BNSF 400123', code: 'ARR', at: '2024-03-04T00:00' }]),
+      { carrier: 'BNSF', bounds: periodBounds('202403') }
+    );
+    expect(entry.skip).toBe('no track this office knows');
+  });
+});
+
+describe('bunching relief reaches the count', () => {
+  const document = {
+    settings: { years: [2024] },
+    stations: [{ splc: '412300', name: 'Memphis North', carrier: 'BNSF' }],
+    tracks: [
+      { id: 'IT-9', splc: '412300', name: 'Delta lead', capacityCars: 8, consigneeId: 'DELTA' },
+    ],
+    parties: [{ id: 'DELTA', name: 'Delta Chemical', noticeAddress: 'a@b.example' }],
+    orders: [
+      { consigneeId: 'DELTA', splc: '412300', wantedOn: '2024-03-04', cars: 1 },
+      { consigneeId: 'DELTA', splc: '412300', wantedOn: '2024-03-05', cars: 1 },
+      { consigneeId: 'DELTA', splc: '412300', wantedOn: '2024-03-06', cars: 1 },
+    ],
+    tariffs: [
+      {
+        page: {
+          id: 'DEM-4000',
+          carrier: 'BNSF',
+          notificationRequired: false,
+          bunchingRelief: true,
+          ladder: [{ fromDay: 1, rate: '150.00' }],
+          freeTime: [{ service: SERVICE.UNLOADING, days: 1 }],
+        },
+        effectiveFrom: '2024-01-01',
+      },
+    ],
+  };
+
+  const bunched = ['BNSF 1', 'BNSF 2', 'BNSF 3'].flatMap((carId) =>
+    build([
+      { carId, code: 'AP', at: '2024-03-06T00:00', trackId: 'IT-9' },
+      { carId, code: 'REL', at: '2024-03-12T00:00' },
+    ])
+  );
+
+  it('relieves the cars that filled an older order', () => {
+    const result = assessMonth(loadConfig(document), bunched, {
+      period: '202403',
+      carrier: 'BNSF',
+    });
+    const bonuses = result.assessments.map((entry) => entry.extraFreeDays).sort();
+    expect(bonuses).toEqual([0, 1, 2]);
+  });
+
+  it('charges those cars less than the same stand with no orders on file', () => {
+    const withOrders = assessMonth(loadConfig(document), bunched, {
+      period: '202403',
+      carrier: 'BNSF',
+    });
+    const without = assessMonth(loadConfig({ ...document, orders: [] }), bunched, {
+      period: '202403',
+      carrier: 'BNSF',
+    });
+    expect(monthTotal(withOrders)).toBeLessThan(monthTotal(without));
+  });
+
+  it('gives nothing on a page that grants no bunching relief', () => {
+    const plain = {
+      ...document,
+      tariffs: [
+        {
+          page: { ...document.tariffs[0].page, bunchingRelief: false },
+          effectiveFrom: '2024-01-01',
+        },
+      ],
+    };
+    const result = assessMonth(loadConfig(plain), bunched, { period: '202403', carrier: 'BNSF' });
+    expect(result.assessments.every((entry) => entry.extraFreeDays === 0)).toBe(true);
+  });
+
+  it('gives nothing when no orders were filed at all', () => {
+    const result = assessMonth(loadConfig({ ...document, orders: [] }), bunched, {
+      period: '202403',
+      carrier: 'BNSF',
+    });
+    expect(result.assessments.every((entry) => entry.extraFreeDays === 0)).toBe(true);
+  });
+
+  it('gives nothing to a single car that was merely late', () => {
+    const lone = build([
+      { carId: 'BNSF 1', code: 'AP', at: '2024-03-06T00:00', trackId: 'IT-9' },
+      { carId: 'BNSF 1', code: 'REL', at: '2024-03-12T00:00' },
+    ]);
+    const result = assessMonth(loadConfig(document), lone, { period: '202403', carrier: 'BNSF' });
+    expect(result.assessments[0].extraFreeDays).toBe(0);
   });
 });
 

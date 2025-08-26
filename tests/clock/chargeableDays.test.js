@@ -199,3 +199,40 @@ describe('relief comes off before the days are cut', () => {
     expect(outside.chargeableCount).toBe(2);
   });
 });
+
+describe('an allowance granted on top of the tariff', () => {
+  const stand = detention('2024-03-04T00:00', '2024-03-08T00:00');
+
+  it('is added to the free time the page allows', () => {
+    const bare = countChargeableDays(stand, { page, calendar, query: unloading });
+    const bonus = countChargeableDays(stand, {
+      page,
+      calendar,
+      query: unloading,
+      extraFreeDays: 2,
+    });
+    expect(bare.allowance).toBe(1);
+    expect(bonus.allowance).toBe(3);
+    expect(bonus.chargeableCount).toBe(bare.chargeableCount - 2);
+  });
+
+  it('shows an unspent bonus as free time left over', () => {
+    const short = countChargeableDays(detention('2024-03-04T00:00', '2024-03-05T00:00'), {
+      page,
+      calendar,
+      query: unloading,
+      extraFreeDays: 4,
+    });
+    expect(unusedFreeTime(short)).toBe(4);
+  });
+
+  it('is nothing by default', () => {
+    expect(countChargeableDays(stand, { page, calendar, query: unloading }).allowance).toBe(1);
+  });
+
+  it('refuses a negative bonus', () => {
+    expect(() =>
+      countChargeableDays(stand, { page, calendar, query: unloading, extraFreeDays: -1 })
+    ).toThrow(ValidationError);
+  });
+});

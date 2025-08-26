@@ -24,11 +24,19 @@ export function assessCar({
   query,
   until,
   startIndex = 1,
+  extraFreeDays = 0,
 } = {}) {
   requireString(carId, 'carId');
   requireObject(page, 'page');
   const detentions = buildDetentions(events, { page, trackBook, until });
   const resets = laddersResetPerDetention(page);
+  /**
+   * A bunching allowance belongs to the arrival, so it is spent once. It has to
+   * land on the first detention that has a span rather than simply the first
+   * one: a car held constructively with no notice has a detention that counts
+   * nothing, and giving the bonus to that threw it away silently.
+   */
+  const bonusAt = detentions.findIndex((detention) => detention.span !== undefined);
   const lines = [];
   let index = startIndex;
   const counts = [];
@@ -41,6 +49,7 @@ export function assessCar({
         exclusions,
         query,
         startIndex: resets ? 1 : index,
+        extraFreeDays: counts.length === bonusAt ? extraFreeDays : 0,
       }
     );
     counts.push(count);
@@ -62,6 +71,7 @@ export function assessCar({
   return {
     carId,
     pageId: page.id,
+    extraFreeDays,
     detentions,
     counts,
     lines,

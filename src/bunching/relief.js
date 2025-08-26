@@ -18,7 +18,16 @@ import { groupsByDay } from './grouping.js';
 export function reliefForGroup(matches, schedule, { capDays } = {}) {
   const day = matches[0].placedOn;
   const ordered = schedule.carsOrderedOn(matches[0].consigneeId, day);
-  const oversupplied = matches.length > ordered;
+  /**
+   * A group of one is never bunched, however late it was. Bunching is several
+   * cars arriving together for one crew to work; a single car arriving two days
+   * after it was wanted is late, and lateness is what free time is for.
+   *
+   * Without the first clause a lone car landing on a day nothing was ordered
+   * for compared 1 against 0, read as oversupplied, and drew relief for being
+   * the only car on the property.
+   */
+  const oversupplied = matches.length > 1 && matches.length > ordered;
   return matches.map((match) => {
     if (!oversupplied || !match.bunched) {
       return { ...match, extraFreeDays: 0, why: oversupplied ? 'on time' : 'not oversupplied' };
