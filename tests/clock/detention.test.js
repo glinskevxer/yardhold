@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   actualDetentions,
+  isStillStanding,
   buildDetentions,
   constructiveDetentions,
   countRespots,
@@ -187,5 +188,49 @@ describe('edges', () => {
     expect(firstStart([])).toBeUndefined();
     expect(lastRelease([])).toBeUndefined();
     expect(countRespots([])).toBe(0);
+  });
+});
+
+describe('closed by a later placement rather than a release', () => {
+  const events = build([
+    { code: 'CP', at: '2024-03-04T06:00', trackId: 'HT-1' },
+    { code: 'AP', at: '2024-03-06T08:00', trackId: 'IT-9' },
+    { code: 'REL', at: '2024-03-09T08:00' },
+  ]);
+
+  it('marks the first detention superseded', () => {
+    const [first, second] = buildDetentions(events, { page: noNotice, trackBook: tracks });
+    expect(first.superseded).toBe(true);
+    expect(second.superseded).toBe(false);
+  });
+
+  it('still reads as open, because nothing released it', () => {
+    const [first] = buildDetentions(events, { page: noNotice, trackBook: tracks });
+    expect(isOpen(first)).toBe(true);
+  });
+
+  it('is not a car still standing at the cut off', () => {
+    const [first, second] = buildDetentions(events, { page: noNotice, trackBook: tracks });
+    expect(isStillStanding(first)).toBe(false);
+    expect(isStillStanding(second)).toBe(false);
+  });
+
+  it('does count a car nothing ever closed as still standing', () => {
+    const [only] = buildDetentions(
+      build([{ code: 'AP', at: '2024-03-04T00:00', trackId: 'IT-9' }]),
+      { page: noNotice, trackBook: tracks }
+    );
+    expect(isStillStanding(only)).toBe(true);
+  });
+
+  it('does not count a released car as still standing', () => {
+    const [only] = buildDetentions(
+      build([
+        { code: 'AP', at: '2024-03-04T00:00', trackId: 'IT-9' },
+        { code: 'REL', at: '2024-03-08T00:00' },
+      ]),
+      { page: noNotice, trackBook: tracks }
+    );
+    expect(isStillStanding(only)).toBe(false);
   });
 });

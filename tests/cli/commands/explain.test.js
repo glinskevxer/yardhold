@@ -3,6 +3,7 @@ import {
   eventTrail,
   explainCar,
   explainText,
+  filingFor,
   runExplain,
 } from '../../../src/cli/commands/explain.js';
 import { loadConfig } from '../../../src/config/loadConfig.js';
@@ -151,5 +152,39 @@ describe('runExplain', () => {
   it('writes JSON when asked', () => {
     const { text } = runExplain({ ...options, output: 'json' }, { readFile });
     expect(JSON.parse(text).page).toBe('DEM-4000');
+  });
+});
+
+describe('the page it says it used', () => {
+  it('names the filing rather than reporting none on file', () => {
+    const { text } = runExplain(options, { readFile });
+    expect(text).not.toContain('no page on file');
+    expect(text).toMatch(/selected\s+DEM-4000 filed against carrier BNSF/);
+  });
+
+  it('resolves the filing for an assessed car', () => {
+    const filing = filingFor(world, result, 'BNSF 400123', 'BNSF');
+    expect(filing.page.id).toBe('DEM-4000');
+  });
+
+  it('has no filing for a car that was not assessed', () => {
+    expect(filingFor(world, result, 'GATX 77', 'BNSF')).toBeUndefined();
+  });
+
+  it('has no filing when no carrier was given', () => {
+    expect(filingFor(world, result, 'BNSF 400123')).toBeUndefined();
+  });
+});
+
+describe('the detention state', () => {
+  it('reads released for a car that was released', () => {
+    const explanation = explainCar(world, result, 'BNSF 400123');
+    expect(explanation.detentions[0].state).toBe('released');
+  });
+
+  it('shows the state rather than an open flag in the text', () => {
+    const { text } = runExplain(options, { readFile });
+    expect(text).toContain('state');
+    expect(text).toContain('released');
   });
 });

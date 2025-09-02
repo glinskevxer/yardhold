@@ -80,6 +80,18 @@
       "leaseId": "L-2024-11",
       "capacityPounds": 190000,
       "lightWeightPounds": 66000
+    },
+    {
+      "id": "UP 512188",
+      "designation": "LO",
+      "capacityPounds": 200000,
+      "lightWeightPounds": 62000
+    },
+    {
+      "id": "UP 512210",
+      "designation": "LO",
+      "capacityPounds": 200000,
+      "lightWeightPounds": 62000
     }
   ],
   "agreements": [
@@ -106,6 +118,12 @@
       "consigneeId": "YAZOO",
       "splc": "412300",
       "wantedOn": "2024-03-05",
+      "cars": 1
+    },
+    {
+      "consigneeId": "YAZOO",
+      "splc": "412300",
+      "wantedOn": "2024-03-06",
       "cars": 1
     }
   ],
@@ -245,6 +263,30 @@
       "consigneeId": "DELTA",
       "route": ["UP", "BNSF"],
       "hazmatPlacard": "UN1824"
+    },
+    {
+      "number": "WB-99018",
+      "carId": "UP 512188",
+      "movement": "inbound-loaded",
+      "billedOn": "2024-03-02",
+      "commodityCode": "0113210",
+      "netWeightPounds": 195800,
+      "originSplc": "389200",
+      "destinationSplc": "412300",
+      "consigneeId": "YAZOO",
+      "route": ["BNSF"]
+    },
+    {
+      "number": "WB-99022",
+      "carId": "UP 512210",
+      "movement": "inbound-loaded",
+      "billedOn": "2024-03-02",
+      "commodityCode": "0113210",
+      "netWeightPounds": 195800,
+      "originSplc": "389200",
+      "destinationSplc": "412300",
+      "consigneeId": "YAZOO",
+      "route": ["BNSF"]
     }
   ],
   "leases": [

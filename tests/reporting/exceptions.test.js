@@ -45,6 +45,18 @@ describe('exceptionsFor', () => {
     expect(found.some((entry) => entry.kind === EXCEPTION.STILL_OPEN)).toBe(true);
   });
 
+  it('does not flag a detention a later placement superseded', () => {
+    const found = exceptionsFor(
+      assessment('BNSF 1', {
+        detentions: [
+          detention({ open: true, releasedAt: undefined, superseded: true }),
+          detention(),
+        ],
+      })
+    );
+    expect(found.some((entry) => entry.kind === EXCEPTION.STILL_OPEN)).toBe(false);
+  });
+
   it('flags a long stand', () => {
     const long = detention({ span: { start: 0, end: MINUTES_PER_DAY * 20 } });
     const found = exceptionsFor(assessment('BNSF 1', { detentions: [long] }));

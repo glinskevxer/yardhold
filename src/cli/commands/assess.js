@@ -10,7 +10,7 @@ import { loadRun } from '../context.js';
  * which nobody uses until the first dispute and everybody uses after it.
  */
 
-const COLUMNS = ['car', 'consignee', 'page', 'days', 'free', 'relief', 'amount'];
+const COLUMNS = ['car', 'consignee', 'page', 'days', 'free', 'bunched', 'relief', 'amount'];
 const DETAIL_COLUMNS = ['car', 'date', 'day', 'placement', 'rate'];
 
 export function assessRows(result) {
@@ -21,6 +21,7 @@ export function assessRows(result) {
       page: assessment.pageId,
       days: assessment.chargeableDays,
       free: assessment.counts.reduce((sum, count) => sum + count.freeUsed, 0),
+      bunched: assessment.extraFreeDays ?? 0,
       relief: assessment.counts.reduce((sum, count) => sum + count.relief.applied.length, 0),
       amount: plainMoney(assessment.total),
     }))

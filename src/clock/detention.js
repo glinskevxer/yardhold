@@ -32,7 +32,7 @@ export function buildDetentions(events, { page, trackBook, until } = {}) {
     }
     if (kind.starts) {
       if (open !== undefined) {
-        detentions.push(close(open, undefined, undefined));
+        detentions.push(close(open, undefined, undefined, true));
       }
       open = openDetention(record, pendingNotice, { page, trackBook });
       pendingNotice = undefined;
@@ -72,7 +72,7 @@ function openDetention(record, notice, { page, trackBook }) {
   };
 }
 
-function close(open, endsAt, event) {
+function close(open, endsAt, event, superseded = false) {
   const releasedAt = endsAt === undefined ? undefined : endsAt;
   const startsAt = open.startsAt;
   const chargeable =
@@ -84,12 +84,24 @@ function close(open, endsAt, event) {
     releasedAt,
     releaseEvent: event,
     open: releasedAt === undefined,
+    /**
+     * Closed by a later placement rather than by a release. The car did not
+     * stay, it moved, so this is not a car standing at the cut off. Reading the
+     * two as the same thing flagged every constructively placed car on the
+     * property as still on the ground.
+     */
+    superseded,
     span: chargeable,
   });
 }
 
 export function isOpen(detention) {
   return detention.open === true;
+}
+
+/** Still on the ground at the cut off, as against merely moved on from. */
+export function isStillStanding(detention) {
+  return detention.open === true && detention.superseded !== true;
 }
 
 export function detentionMinutes(detention) {

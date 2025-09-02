@@ -29,14 +29,14 @@ describe('the shipped example configuration', () => {
       stations: 2,
       tracks: 3,
       parties: 2,
-      cars: 4,
+      cars: 6,
       calendars: 2,
       tariffs: 2,
       agreements: 1,
-      orders: 2,
+      orders: 3,
       exclusions: 1,
       commodities: 6,
-      waybills: 2,
+      waybills: 4,
       supplements: 0,
       leases: 1,
       scaleTickets: 2,
@@ -63,7 +63,7 @@ describe('assess against the example', () => {
     const code = await main(['assess', ...common], rig.deps);
     expect(code).toBe(0);
     expect(rig.errs).toEqual([]);
-    for (const car of ['BNSF 400123', 'BNSF 400188', 'UP 512004', 'GATX 77']) {
+    for (const car of ['BNSF 400123', 'BNSF 400188', 'UP 512004', 'UP 512188', 'GATX 77']) {
       expect(rig.out[0]).toContain(car);
     }
   });
@@ -74,7 +74,7 @@ describe('assess against the example', () => {
     const parsed = JSON.parse(rig.out[0]);
     expect(parsed.skipped).toEqual([]);
     expect(parsed.total).toBeGreaterThan(0);
-    expect(parsed.rows).toHaveLength(4);
+    expect(parsed.rows).toHaveLength(6);
   });
 
   it('gives the two Delta boxcars the contract page', async () => {

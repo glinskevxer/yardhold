@@ -18,6 +18,8 @@ allowed to count:
   relief reaches it, so the same closure credits one car and not another
 - an average agreement decides whether a quick turnaround is worth a credit at
   all, and on which of two bases
+- how many cars turned up together decides whether a late car was bunched or
+  merely late, and only the first of those earns relief
 - a claim's ground decides which inputs may be recomputed, so the same facts
   win on one ground and lose on another
 

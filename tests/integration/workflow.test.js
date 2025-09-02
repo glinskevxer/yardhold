@@ -46,7 +46,7 @@ describe('reading the month', () => {
 
   it('assesses every car', () => {
     expect(result.skipped).toEqual([]);
-    expect(result.assessments).toHaveLength(4);
+    expect(result.assessments).toHaveLength(6);
   });
 
   it('finds both consignees', () => {
@@ -88,7 +88,7 @@ describe('reconciling against the carrier', () => {
   const rows = reconcile(result, carrier);
 
   it('lines every car up', () => {
-    expect(rows).toHaveLength(4);
+    expect(rows).toHaveLength(6);
   });
 
   it('finds a difference worth claiming', () => {

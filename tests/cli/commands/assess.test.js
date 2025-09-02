@@ -57,6 +57,7 @@ describe('assessRows', () => {
         page: 'DEM-4000',
         days: 3,
         free: 1,
+        bunched: 0,
         relief: 0,
         amount: '450.00',
       },
@@ -102,7 +103,7 @@ describe('assessReport', () => {
   it('writes CSV with no footer', () => {
     const csv = assessReport(result, { output: OUTPUT.CSV });
     expect(csv).not.toContain('total');
-    expect(csv.split('\n')[0]).toBe('car,consignee,page,days,free,relief,amount');
+    expect(csv.split('\n')[0]).toBe('car,consignee,page,days,free,bunched,relief,amount');
   });
 
   it('wraps the JSON in a header', () => {

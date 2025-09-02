@@ -1,5 +1,6 @@
 import { requireInteger, requireObject } from '../core/guards.js';
 import { MINUTES_PER_DAY } from '../time/instant.js';
+import { isStillStanding } from '../clock/detention.js';
 
 /**
  * The exception report.
@@ -42,7 +43,7 @@ export function exceptionsFor(assessment, { longStandDays = 14 } = {}) {
         detail: 'placed but never notified, so the clock never started',
       });
     }
-    if (detention.open) {
+    if (isStillStanding(detention)) {
       found.push({
         kind: EXCEPTION.STILL_OPEN,
         carId: assessment.carId,
