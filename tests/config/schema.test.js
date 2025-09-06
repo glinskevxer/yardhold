@@ -63,7 +63,13 @@ describe('settingsOf', () => {
       taxRateBasisPoints: 0,
       years: [],
       invoicePrefix: 'INV',
+      reclaim: {},
     });
+  });
+
+  it('takes a reclaim block when the document carries one', () => {
+    const settings = settingsOf({ ...minimal, settings: { reclaim: { sharePercent: 50 } } });
+    expect(settings.reclaim).toEqual({ sharePercent: 50 });
   });
 
   it('takes what the document gave', () => {

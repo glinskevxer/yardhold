@@ -3,7 +3,11 @@
     "years": [2024, 2025],
     "offsetMinutes": -360,
     "termsDays": 15,
-    "taxRateBasisPoints": 0
+    "taxRateBasisPoints": 0,
+    "reclaim": {
+      "basis": "chargeable-hours",
+      "sharePercent": 100
+    }
   },
   "stations": [
     {
@@ -151,7 +155,14 @@
     {
       "carKind": "boxcar",
       "hourlyRate": "0.7500",
-      "mileageRate": "0.0425"
+      "mileageRate": "0.0425",
+      "freeRunningHours": 24
+    },
+    {
+      "carKind": "hopper",
+      "hourlyRate": "0.8100",
+      "mileageRate": "0.0425",
+      "freeRunningHours": 24
     }
   ],
   "tariffs": [

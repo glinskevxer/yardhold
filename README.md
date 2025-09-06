@@ -32,6 +32,7 @@ spurtally explain -c world.json -e march.csv -p 202403 -r BNSF -k "BNSF 400123"
 spurtally report  -c world.json -e march.csv -p 202403 -r BNSF -t kpi
 spurtally reconcile -c world.json -e march.csv -p 202403 -r BNSF -b carrier.csv
 spurtally fleet     -c world.json -a 2024-03-31 --flagged
+spurtally hire      -c world.json -e march.csv -p 202403 -r BNSF
 spurtally validate  -c world.json --strict
 ```
 
@@ -49,6 +50,12 @@ whose track was full every day did not fail to take its cars.
 
 `reconcile` puts our count beside the carrier's own invoice and names every
 disagreement, which is the thing this was written for.
+
+`hire` is the car-hire side: what the carrier paid to hold foreign cars, and how
+much of that the consignee caused and can be charged for. The hours come off the
+trip rather than the detention, because hire runs from the moment the carrier
+takes the car and the days it sat in the yard before anyone placed it are
+exactly the days the consignee is not liable for.
 
 `fleet` and `validate` take no event feed. They read the standing state of the
 equipment and the configuration, which is a different question from what

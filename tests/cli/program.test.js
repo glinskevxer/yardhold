@@ -77,6 +77,7 @@ describe('buildProgram', () => {
       'assess',
       'explain',
       'fleet',
+      'hire',
       'invoice',
       'reconcile',
       'report',
@@ -321,12 +322,23 @@ describe('statement', () => {
   });
 });
 
+describe('hire', () => {
+  it('reports the hire and the reclaim', async () => {
+    const rig = harness();
+    const code = await main(['hire', ...common], rig.deps);
+    expect(code).toBe(0);
+    expect(rig.out[0]).toContain('BNSF 400123');
+    expect(rig.out[0]).toMatch(/reclaimable\s+/);
+  });
+});
+
 describe('the help', () => {
   it('lists every command through the helper', () => {
     expect(commandNames(buildProgram(harness().deps))).toEqual([
       'assess',
       'explain',
       'fleet',
+      'hire',
       'invoice',
       'reconcile',
       'report',

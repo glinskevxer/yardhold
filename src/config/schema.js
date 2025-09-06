@@ -65,6 +65,7 @@ export function settingsOf(document) {
     taxRateBasisPoints: settings.taxRateBasisPoints ?? 0,
     years: settings.years ?? [],
     invoicePrefix: settings.invoicePrefix ?? 'INV',
+    reclaim: settings.reclaim ?? {},
   };
 }
 

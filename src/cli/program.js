@@ -7,6 +7,7 @@ import { runReconcile } from './commands/reconcile.js';
 import { runValidate } from './commands/validate.js';
 import { runStatement } from './commands/statement.js';
 import { runFleet } from './commands/fleet.js';
+import { runHire } from './commands/hire.js';
 import { runSettle } from './commands/settle.js';
 import { reportError, resolveOutput } from './context.js';
 import { emit } from '../io/output.js';
@@ -95,6 +96,10 @@ export function buildProgram(deps = {}) {
     .option('-n, --consignee <id>', 'one consignee rather than all of them')
     .action(guard(runSettle));
 
+  shared(program.command('hire').description('car hire paid and what can be reclaimed')).action(
+    guard(runHire)
+  );
+
   shared(program.command('reconcile').description('compare our count with the carrier bill'))
     .requiredOption('-b, --carrier-invoice <path>', 'the carrier demurrage invoice as CSV')
     .option('-a, --all', 'show the cars that agree as well')
@@ -134,6 +139,7 @@ export function buildProgram(deps = {}) {
       '  spurtally report  -c world.json -e march.csv -p 202403 -r BNSF -t kpi',
       '  spurtally reconcile -c world.json -e march.csv -p 202403 -r BNSF -b carrier.csv',
       '  spurtally statement -c world.json -e march.csv -p 202403 -r BNSF -n DELTA',
+      '  spurtally hire  -c world.json -e march.csv -p 202403 -r BNSF',
       '  spurtally fleet -c world.json -a 2024-03-31 --flagged',
       '  spurtally validate -c world.json --strict',
       '',
