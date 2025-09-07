@@ -39,8 +39,8 @@ spurtally validate  -c world.json --strict
 Every command takes `-o table|csv|json` and `--out <path>` to write to a file
 instead of the terminal. The file extension has to agree with the format.
 
-`report` runs one of `exceptions`, `kpi`, `dwell`, `register`, `trips` or
-`capacity`. The register is
+`report` runs one of `exceptions`, `kpi`, `dwell`, `register`, `trips`,
+`capacity` or `interchange`. The register is
 a grid of car against day, one character per cell, showing where each day sat on
 the rate ladder. `trips` reads the event feed rather than the assessment, so it
 shows cars that arrived, were never placed and left again, which have no

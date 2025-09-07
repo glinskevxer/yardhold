@@ -40,6 +40,7 @@ describe('the shipped example configuration', () => {
       supplements: 0,
       leases: 1,
       scaleTickets: 2,
+      interchanges: 3,
     });
   });
 

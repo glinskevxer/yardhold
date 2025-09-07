@@ -64,6 +64,7 @@ describe('loadConfig', () => {
       supplements: 0,
       leases: 0,
       scaleTickets: 0,
+      interchanges: 0,
     });
   });
 

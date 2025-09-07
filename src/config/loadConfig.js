@@ -14,6 +14,7 @@ import { STANDARD_COMMODITIES, commodityBook } from '../tariff/commodity.js';
 import { waybillBook } from '../events/waybill.js';
 import { lease } from '../equipment/lease.js';
 import { scaleTicket } from '../equipment/scaleTicket.js';
+import { interchange } from '../switching/interchange.js';
 import { checkDocument, settingsOf } from './schema.js';
 
 /**
@@ -71,6 +72,9 @@ export function loadConfig(document) {
     scaleTickets: (document.scaleTickets ?? []).map((entry) =>
       entry.netPounds === undefined ? scaleTicket(entry) : entry
     ),
+    interchanges: (document.interchanges ?? []).map((entry) =>
+      entry.deemedAcceptedAt === undefined ? interchange(entry) : entry
+    ),
   });
 }
 
@@ -127,5 +131,6 @@ export function worldSummary(world) {
     supplements: world.tariffs.supplements().length,
     leases: world.leases.length,
     scaleTickets: world.scaleTickets.length,
+    interchanges: world.interchanges.length,
   };
 }

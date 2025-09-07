@@ -5,6 +5,7 @@ import {
   registerBody,
   capacityBody,
   placementRecords,
+  interchangeBody,
   tripRows,
   tripsBody,
   exceptionsBody,
@@ -15,6 +16,7 @@ import {
 import { OUTPUT } from '../../../src/cli/format.js';
 import { ValidationError } from '../../../src/core/errors.js';
 import { loadConfig } from '../../../src/config/loadConfig.js';
+import { parseInstant } from '../../../src/time/instant.js';
 import { makeReadFile, sampleDocument, sampleOptions } from '../../fixtures/world.js';
 
 const feed = [
@@ -336,6 +338,80 @@ describe('the capacity report', () => {
   });
 });
 
+describe('the interchange report', () => {
+  const junction = {
+    carId: 'BNSF 400123',
+    junction: 'Memphis Jct',
+    deliveringCarrier: 'UP',
+    receivingCarrier: 'BNSF',
+    offeredAt: '2024-03-04T02:00',
+  };
+
+  const world = loadConfig(
+    sampleDocument({
+      interchanges: [
+        { ...junction, status: 'accepted', settledAt: '2024-03-04T04:30' },
+        { ...junction, carId: 'UP 3', status: 'offered' },
+        {
+          ...junction,
+          carId: 'GATX 77',
+          status: 'refused',
+          refusalReason: 'placard missing',
+          settledAt: '2024-03-04T06:00',
+        },
+      ],
+    })
+  );
+
+  it('gives the accepted car to the receiving carrier', () => {
+    const parsed = JSON.parse(interchangeBody(world, OUTPUT.JSON));
+    expect(parsed.rows.find((row) => row.car === 'BNSF 400123').responsible).toBe('BNSF');
+  });
+
+  it('gives the refused car back to the delivering carrier', () => {
+    const parsed = JSON.parse(interchangeBody(world, OUTPUT.JSON));
+    expect(parsed.rows.find((row) => row.car === 'GATX 77').responsible).toBe('UP');
+  });
+
+  it('leaves an unanswered offer with the delivering carrier inside the grace', () => {
+    const inside = parseInstant('2024-03-04T12:00-06:00');
+    const parsed = JSON.parse(interchangeBody(world, OUTPUT.JSON, -360, inside));
+    const row = parsed.rows.find((entry) => entry.car === 'UP 3');
+    expect(row.responsible).toBe('UP');
+    expect(row.deemed).toBe('no');
+  });
+
+  it('moves it once the grace has run', () => {
+    const after = parseInstant('2024-03-06T12:00-06:00');
+    const parsed = JSON.parse(interchangeBody(world, OUTPUT.JSON, -360, after));
+    const row = parsed.rows.find((entry) => entry.car === 'UP 3');
+    expect(row.responsible).toBe('BNSF');
+    expect(row.deemed).toBe('yes');
+  });
+
+  it('counts the refusals', () => {
+    expect(JSON.parse(interchangeBody(world, OUTPUT.JSON)).refused).toBe(1);
+  });
+
+  it('foots with the three counts', () => {
+    const text = interchangeBody(world, OUTPUT.TABLE);
+    expect(text).toMatch(/handovers\s+3/);
+    expect(text).toMatch(/refused\s+1/);
+  });
+
+  it('writes a CSV in a fixed column order', () => {
+    expect(interchangeBody(world, OUTPUT.CSV).split('\n')[0]).toBe(
+      'car,junction,from,to,offered,status,responsible,hours,deemed'
+    );
+  });
+
+  it('says so when nothing is on file', () => {
+    expect(interchangeBody(loadConfig(sampleDocument()), OUTPUT.TABLE)).toBe(
+      'no interchange on file'
+    );
+  });
+});
+
 describe('reportBody', () => {
   it('dispatches on the kind', () => {
     expect(reportBody(REPORT.EXCEPTIONS, result, OUTPUT.TABLE)).toContain('not-assessed');
@@ -378,6 +454,12 @@ describe('runReport', () => {
         expect(error.message).toContain(kind);
       }
     }
+  });
+
+  it('runs the interchange report', () => {
+    expect(runReport({ ...options, report: 'interchange' }, { readFile }).text).toBe(
+      'no interchange on file'
+    );
   });
 
   it('runs the capacity report', () => {

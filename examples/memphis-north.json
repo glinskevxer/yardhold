@@ -335,5 +335,34 @@
       "grossPounds": 244000,
       "tarePounds": 66000
     }
+  ],
+  "interchanges": [
+    {
+      "carId": "UP 512004",
+      "junction": "Memphis Jct",
+      "deliveringCarrier": "UP",
+      "receivingCarrier": "BNSF",
+      "offeredAt": "2024-03-04T02:00",
+      "status": "accepted",
+      "settledAt": "2024-03-04T04:30"
+    },
+    {
+      "carId": "UP 512188",
+      "junction": "Memphis Jct",
+      "deliveringCarrier": "UP",
+      "receivingCarrier": "BNSF",
+      "offeredAt": "2024-03-05T22:00",
+      "status": "offered"
+    },
+    {
+      "carId": "UP 512210",
+      "junction": "Memphis Jct",
+      "deliveringCarrier": "UP",
+      "receivingCarrier": "BNSF",
+      "offeredAt": "2024-03-05T22:00",
+      "status": "refused",
+      "refusalReason": "placard missing",
+      "settledAt": "2024-03-06T01:00"
+    }
   ]
 }

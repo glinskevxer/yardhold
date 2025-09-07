@@ -79,7 +79,7 @@ export function buildProgram(deps = {}) {
   shared(program.command('report').description('exceptions, month figures or dwell'))
     .option(
       '-t, --report <kind>',
-      'exceptions, kpi, dwell, register, trips or capacity',
+      'exceptions, kpi, dwell, register, trips, capacity or interchange',
       'exceptions'
     )
     .action(guard(runReport));

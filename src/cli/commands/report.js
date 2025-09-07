@@ -13,8 +13,15 @@ import {
   trackOccupancy,
   utilisation,
 } from '../../site/capacity.js';
+import {
+  isDeemedAccepted,
+  refusals,
+  responsibleCarrier,
+  timeAtJunctionMinutes,
+} from '../../switching/interchange.js';
 import { DEFAULT_OFFSET_MINUTES, dateAt, formatInstant } from '../../time/instant.js';
 import { formatCivilDate } from '../../time/civil.js';
+import { parseInstant } from '../../time/instant.js';
 import { OUTPUT, keyValueBlock, plainMoney, renderRows } from '../format.js';
 import { loadRun } from '../context.js';
 
@@ -38,6 +45,7 @@ export const REPORT = Object.freeze({
   REGISTER: 'register',
   TRIPS: 'trips',
   CAPACITY: 'capacity',
+  INTERCHANGE: 'interchange',
 });
 
 const REPORTS = Object.values(REPORT);
@@ -276,7 +284,57 @@ export function capacityBody(world, result, output, offsetMinutes) {
   return lines.join('\n');
 }
 
-export function reportBody(kind, result, output, { events = [], offsetMinutes, world } = {}) {
+/**
+ * Who owned each car standing at a junction. The interchange rules had no
+ * caller at all, so an office running this program could not answer the one
+ * question a junction raises: an offer nobody answered inside the grace is
+ * deemed accepted, and until it is, the hours belong to the carrier that
+ * offered it rather than the one that will eventually take it.
+ */
+export function interchangeBody(world, output, offsetMinutes = DEFAULT_OFFSET_MINUTES, asOf) {
+  const rows = world.interchanges.map((record) => ({
+    car: record.carId,
+    junction: record.junction,
+    from: record.deliveringCarrier,
+    to: record.receivingCarrier,
+    offered: formatInstant(record.offeredAt, offsetMinutes),
+    status: record.status,
+    responsible: responsibleCarrier(record, asOf),
+    hours: Math.round(timeAtJunctionMinutes(record, asOf) / 60),
+    deemed: isDeemedAccepted(record, asOf) ? 'yes' : 'no',
+  }));
+  if (output === OUTPUT.JSON) {
+    return JSON.stringify({ asOf, refused: refusals(world.interchanges).length, rows }, null, 2);
+  }
+  const columns = [
+    'car',
+    'junction',
+    'from',
+    'to',
+    'offered',
+    'status',
+    'responsible',
+    'hours',
+    'deemed',
+  ];
+  if (output === OUTPUT.CSV) {
+    return renderRows(rows, OUTPUT.CSV, columns);
+  }
+  if (rows.length === 0) {
+    return 'no interchange on file';
+  }
+  return [
+    renderRows(rows, OUTPUT.TABLE, columns),
+    '',
+    keyValueBlock({
+      handovers: rows.length,
+      refused: refusals(world.interchanges).length,
+      'deemed accepted': rows.filter((row) => row.deemed === 'yes').length,
+    }),
+  ].join('\n');
+}
+
+export function reportBody(kind, result, output, { events = [], offsetMinutes, world, asOf } = {}) {
   requireOneOf(kind, REPORTS, 'report');
   if (kind === REPORT.EXCEPTIONS) {
     return exceptionsBody(result, output);
@@ -293,6 +351,9 @@ export function reportBody(kind, result, output, { events = [], offsetMinutes, w
   if (kind === REPORT.CAPACITY) {
     return capacityBody(world, result, output, offsetMinutes);
   }
+  if (kind === REPORT.INTERCHANGE) {
+    return interchangeBody(world, output, offsetMinutes, asOf);
+  }
   return dwellBody(result, output);
 }
 
@@ -307,6 +368,10 @@ export function runReport(options, deps = {}) {
       events: feed.events,
       offsetMinutes: context.world.settings.offsetMinutes,
       world: context.world,
+      asOf:
+        options.asOf === undefined
+          ? undefined
+          : parseInstant(options.asOf, context.world.settings.offsetMinutes),
     }),
     result,
     feed,
