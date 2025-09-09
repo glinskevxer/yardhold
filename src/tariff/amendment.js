@@ -1,6 +1,7 @@
 import { ConflictError, ValidationError } from '../core/errors.js';
 import { optional, requireArray, requireOneOf, requireString } from '../core/guards.js';
 import { compareDates, formatCivilDate, parseCivilDate } from '../time/civil.js';
+import { inForceOn } from './effectivity.js';
 import { freeTimeTable } from './freeTimeTable.js';
 import { rateLadder } from './rateLadder.js';
 import { tariff } from './tariff.js';
@@ -28,6 +29,7 @@ export function supplement({
   number,
   pageId,
   effectiveFrom,
+  effectiveTo,
   amends,
   ladder,
   freeTime,
@@ -38,6 +40,12 @@ export function supplement({
   requireString(pageId, 'pageId');
   requireOneOf(amends, KINDS, 'amends');
   const from = parseCivilDate(requireString(effectiveFrom, 'effectiveFrom'));
+  const to = effectiveTo === undefined ? undefined : parseCivilDate(effectiveTo);
+  if (to !== undefined && compareDates(from, to) > 0) {
+    throw new ValidationError('a supplement cannot be cancelled before it takes effect', {
+      number,
+    });
+  }
   if (amends === AMENDS.LADDER && ladder === undefined) {
     throw new ValidationError('a ladder supplement has to carry a ladder', { number });
   }
@@ -53,6 +61,8 @@ export function supplement({
     amends,
     effectiveFrom: formatCivilDate(from),
     from,
+    to,
+    effectiveTo: to === undefined ? undefined : formatCivilDate(to),
     ladder: optional(ladder, (value) => (Array.isArray(value) ? rateLadder(value) : value)),
     freeTime: optional(freeTime, (value) => (Array.isArray(value) ? freeTimeTable(value) : value)),
     settings: optional(settings, (value) => value),
@@ -77,9 +87,16 @@ export function supplementSeries(supplements = []) {
   );
 }
 
+/**
+ * Supplements can carry an end date, and the hand-rolled filter here only ever
+ * looked at the start, so one that had been cancelled stayed laid over the page
+ * for good. The shared test reads both ends.
+ */
 export function supplementsInForce(series, pageId, date) {
-  const day = typeof date === 'string' ? parseCivilDate(date) : date;
-  return series.filter((entry) => entry.pageId === pageId && compareDates(entry.from, day) <= 0);
+  return inForceOn(
+    series.filter((entry) => entry.pageId === pageId),
+    date
+  );
 }
 
 /** Lay every supplement in force over the page, oldest first. */

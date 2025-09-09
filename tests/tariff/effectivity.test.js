@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   effectiveDates,
+  inForceOn,
+  isInForceOn,
   effectiveEntry,
   effectiveSeries,
   entryOn,
@@ -104,5 +106,34 @@ describe('supersededOn', () => {
 
   it('is undefined past the end of the series', () => {
     expect(supersededOn(series, 9)).toBeUndefined();
+  });
+});
+
+describe('isInForceOn', () => {
+  const open = effectiveEntry('2024-01-01', 'A');
+  const closed = effectiveEntry('2024-01-01', 'A', { effectiveTo: '2024-03-31' });
+
+  it('is in force from the day it takes effect', () => {
+    expect(isInForceOn(open, '2024-01-01')).toBe(true);
+    expect(isInForceOn(open, '2023-12-31')).toBe(false);
+  });
+
+  it('stays in force forever with no end date', () => {
+    expect(isInForceOn(open, '2099-01-01')).toBe(true);
+  });
+
+  it('reads the end date when there is one', () => {
+    expect(isInForceOn(closed, '2024-03-31')).toBe(true);
+    expect(isInForceOn(closed, '2024-04-01')).toBe(false);
+  });
+
+  it('takes a parsed date as well as text', () => {
+    expect(isInForceOn(open, { year: 2024, month: 6, day: 1 })).toBe(true);
+  });
+
+  it('filters a list', () => {
+    expect(inForceOn([open, closed], '2024-04-01')).toEqual([open]);
+    expect(inForceOn([open, closed], '2024-02-01')).toHaveLength(2);
+    expect(inForceOn([], '2024-02-01')).toEqual([]);
   });
 });

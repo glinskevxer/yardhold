@@ -3,6 +3,7 @@ import { requireArray, requireString } from '../core/guards.js';
 import { compareDates, formatCivilDate, parseCivilDate } from '../time/civil.js';
 import { tariff } from './tariff.js';
 import { pageAsAmended, supplementSeries } from './amendment.js';
+import { inForceOn } from './effectivity.js';
 
 /**
  * The tariff book. Pages are filed against a carrier and optionally a station
@@ -105,11 +106,10 @@ export function tariffBook(filings = [], supplements = []) {
       }
       const consigneeId =
         query.consigneeId === undefined ? undefined : query.consigneeId.toUpperCase();
-      return all
-        .filter((filing) => matches(filing, { ...query, carrier, consigneeId }))
-        .filter((filing) => compareDates(filing.from, day) <= 0)
-        .filter((filing) => filing.to === undefined || compareDates(filing.to, day) >= 0)
-        .sort((a, b) => b.weight - a.weight || compareDates(b.from, a.from));
+      return inForceOn(
+        all.filter((filing) => matches(filing, { ...query, carrier, consigneeId })),
+        day
+      ).sort((a, b) => b.weight - a.weight || compareDates(b.from, a.from));
     },
     find(query) {
       return book.filingsFor(query)[0];

@@ -39,6 +39,24 @@ export function effectiveSeries(entries = []) {
   return Object.freeze(sorted);
 }
 
+/**
+ * Is this record the one in force on that day. Three places were each writing
+ * the same pair of comparisons out by hand, and the tariff book's copy was the
+ * only one that remembered an entry can expire, so a supplement with an end
+ * date stayed in force forever.
+ */
+export function isInForceOn(entry, date) {
+  const day = typeof date === 'string' ? parseCivilDate(date) : date;
+  if (compareDates(entry.from, day) > 0) {
+    return false;
+  }
+  return entry.to === undefined || compareDates(entry.to, day) >= 0;
+}
+
+export function inForceOn(entries, date) {
+  return entries.filter((entry) => isInForceOn(entry, date));
+}
+
 export function entryOn(series, date) {
   const day = typeof date === 'string' ? parseCivilDate(date) : date;
   let found;
@@ -46,10 +64,9 @@ export function entryOn(series, date) {
     if (compareDates(entry.from, day) > 0) {
       break;
     }
-    if (entry.to !== undefined && compareDates(entry.to, day) < 0) {
-      continue;
+    if (isInForceOn(entry, day)) {
+      found = entry;
     }
-    found = entry;
   }
   return found;
 }

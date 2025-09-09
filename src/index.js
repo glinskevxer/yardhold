@@ -36,6 +36,8 @@ export { rateLadder, rateForDay, LADDER_RESET } from './tariff/rateLadder.js';
 export { freeTimeTable, SERVICE, DAY_KIND } from './tariff/freeTimeTable.js';
 export { commodityBook, STANDARD_COMMODITIES } from './tariff/commodity.js';
 export { contract, applyDiscount, selectContract } from './tariff/contract.js';
+export { supplement, supplementSeries, pageAsAmended } from './tariff/amendment.js';
+export { effectiveSeries, entryOn, isInForceOn, inForceOn } from './tariff/effectivity.js';
 
 export { buildDetentions } from './clock/detention.js';
 export { countChargeableDays } from './clock/chargeableDays.js';

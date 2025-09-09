@@ -110,6 +110,50 @@ describe('supplementsInForce', () => {
   });
 });
 
+describe('a supplement that was cancelled', () => {
+  const cancelled = {
+    number: 'SUPP-7',
+    pageId: 'DEM-4000',
+    amends: AMENDS.LADDER,
+    effectiveFrom: '2024-03-01',
+    effectiveTo: '2024-04-30',
+    ladder: [{ fromDay: 1, rate: '500.00' }],
+  };
+
+  it('carries both ends', () => {
+    const built = supplement(cancelled);
+    expect(built.effectiveFrom).toBe('2024-03-01');
+    expect(built.effectiveTo).toBe('2024-04-30');
+  });
+
+  it('refuses one cancelled before it took effect', () => {
+    expect(() => supplement({ ...cancelled, effectiveTo: '2024-02-01' })).toThrow(
+      /cancelled before it takes effect/
+    );
+  });
+
+  it('is in force inside its window', () => {
+    const series = supplementSeries([cancelled]);
+    expect(supplementsInForce(series, 'DEM-4000', '2024-04-01')).toHaveLength(1);
+  });
+
+  it('stops being in force after it was cancelled', () => {
+    const series = supplementSeries([cancelled]);
+    expect(supplementsInForce(series, 'DEM-4000', '2024-05-01')).toEqual([]);
+  });
+
+  it('stops being laid over the page after it was cancelled', () => {
+    const series = supplementSeries([cancelled]);
+    expect(rateForDay(pageAsAmended(page, series, '2024-04-01').page.ladder, 1)).toBe(50000);
+    expect(rateForDay(pageAsAmended(page, series, '2024-05-01').page.ladder, 1)).toBe(15000);
+  });
+
+  it('leaves a supplement with no end date in force', () => {
+    const series = supplementSeries([raise]);
+    expect(supplementsInForce(series, 'DEM-4000', '2099-01-01')).toHaveLength(1);
+  });
+});
+
 describe('pageAsAmended', () => {
   const series = supplementSeries([lowerBack, raise, moreFreeTime]);
 
