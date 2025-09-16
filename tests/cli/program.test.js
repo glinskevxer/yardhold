@@ -78,6 +78,7 @@ describe('buildProgram', () => {
       'explain',
       'fleet',
       'hire',
+      'history',
       'invoice',
       'reconcile',
       'report',
@@ -332,6 +333,27 @@ describe('hire', () => {
   });
 });
 
+describe('history', () => {
+  it('compares two months', async () => {
+    const rig = harness();
+    const inner = rig.deps.readFile;
+    rig.deps.readFile = (path) =>
+      path.endsWith('.csv') && !path.endsWith('events.csv') ? inner('events.csv') : inner(path);
+    const code = await main(
+      ['history', '-c', 'world.json', '-r', 'BNSF', '-m', '202403:a.csv', '-m', '202404:b.csv'],
+      rig.deps
+    );
+    expect(code).toBe(0);
+    expect(rig.out[0]).toContain('month on month');
+  });
+
+  it('needs at least one month', async () => {
+    const rig = harness();
+    await main(['history', '-c', 'world.json', '-r', 'BNSF'], rig.deps);
+    expect(rig.out).toEqual([]);
+  });
+});
+
 describe('the help', () => {
   it('lists every command through the helper', () => {
     expect(commandNames(buildProgram(harness().deps))).toEqual([
@@ -339,6 +361,7 @@ describe('the help', () => {
       'explain',
       'fleet',
       'hire',
+      'history',
       'invoice',
       'reconcile',
       'report',
@@ -350,7 +373,7 @@ describe('the help', () => {
 
   it('gives every month command the shared options', () => {
     const program = buildProgram(harness().deps);
-    const configOnly = ['validate', 'fleet'];
+    const configOnly = ['validate', 'fleet', 'history'];
     for (const name of commandNames(program).filter((entry) => !configOnly.includes(entry))) {
       const options = optionsOf(program, name);
       expect(options).toContain('--config');

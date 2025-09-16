@@ -8,6 +8,7 @@ import { runValidate } from './commands/validate.js';
 import { runStatement } from './commands/statement.js';
 import { runFleet } from './commands/fleet.js';
 import { runHire } from './commands/hire.js';
+import { runHistory } from './commands/history.js';
 import { runSettle } from './commands/settle.js';
 import { reportError, resolveOutput } from './context.js';
 import { emit } from '../io/output.js';
@@ -107,6 +108,22 @@ export function buildProgram(deps = {}) {
     .action(guard(runReconcile));
 
   program
+    .command('history')
+    .description('several months side by side')
+    .requiredOption('-c, --config <path>', 'configuration document')
+    .requiredOption('-r, --carrier <mark>', 'serving carrier')
+    .requiredOption(
+      '-m, --month <period:path>',
+      'a period and its event feed, repeatable',
+      (value, all) => [...all, value],
+      []
+    )
+    .option('-o, --output <format>', 'table, csv or json', 'table')
+    .option('--out <path>', 'write to a file rather than to the terminal')
+    .option('-w, --window <months>', 'also show a moving average over this many months')
+    .action(guard(runHistory));
+
+  program
     .command('fleet')
     .description('the register, the leases and the weights')
     .requiredOption('-c, --config <path>', 'configuration document')
@@ -140,6 +157,7 @@ export function buildProgram(deps = {}) {
       '  spurtally reconcile -c world.json -e march.csv -p 202403 -r BNSF -b carrier.csv',
       '  spurtally statement -c world.json -e march.csv -p 202403 -r BNSF -n DELTA',
       '  spurtally hire  -c world.json -e march.csv -p 202403 -r BNSF',
+      '  spurtally history -c world.json -r BNSF -m 202401:jan.csv -m 202402:feb.csv',
       '  spurtally fleet -c world.json -a 2024-03-31 --flagged',
       '  spurtally validate -c world.json --strict',
       '',

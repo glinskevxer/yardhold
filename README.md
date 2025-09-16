@@ -33,6 +33,7 @@ spurtally report  -c world.json -e march.csv -p 202403 -r BNSF -t kpi
 spurtally reconcile -c world.json -e march.csv -p 202403 -r BNSF -b carrier.csv
 spurtally fleet     -c world.json -a 2024-03-31 --flagged
 spurtally hire      -c world.json -e march.csv -p 202403 -r BNSF
+spurtally history   -c world.json -r BNSF -m 202401:jan.csv -m 202402:feb.csv
 spurtally validate  -c world.json --strict
 ```
 
@@ -56,6 +57,11 @@ much of that the consignee caused and can be charged for. The hours come off the
 trip rather than the detention, because hire runs from the moment the carrier
 takes the car and the days it sat in the yard before anyone placed it are
 exactly the days the consignee is not liable for.
+
+`history` takes a month per `--month` and puts them side by side. The figure to
+read there is the charge per car rather than the charge: a month can be
+expensive because the plant was slow or because the plant was busy, and those
+two want opposite answers.
 
 `fleet` and `validate` take no event feed. They read the standing state of the
 equipment and the configuration, which is a different question from what
