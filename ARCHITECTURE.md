@@ -35,6 +35,12 @@ a sum over days.
   the two bases do not measure the same thing.
 - **A claim's ground** decides which inputs a recomputation may move, so the
   same facts win on one ground and lose on another.
+- **How many cars turned up together** decides whether a late car was bunched or
+  merely late. A group of one is never bunched however late it was, so the same
+  drift earns relief or nothing depending on what else arrived with it.
+- **Whether an interchange offer was answered** decides which carrier owns the
+  hours a car spent at a junction, and an offer nobody answered inside the grace
+  is deemed accepted.
 
 If a change makes one of those decisions in the wrong layer it will look like it
 works, because the tests for that layer will pass. The composition tests in
@@ -69,3 +75,7 @@ allowed to reach downward and nothing reaches sideways into a peer's internals.
 - Errors carry a stable `code`. The CLI branches on the code, never the message.
 - Nothing throws for a broken feed. Problems come back beside the data, because
   a month still has to be billed.
+- Every module is reachable from a command. That is a rule rather than an
+  observation: `tests/integration/commands.test.js` walks the list the program
+  registers, and wiring an unreached layer into the application is how most of
+  the real defects in this codebase were found.

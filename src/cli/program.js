@@ -13,7 +13,7 @@ import { runSettle } from './commands/settle.js';
 import { reportError, resolveOutput } from './context.js';
 import { emit } from '../io/output.js';
 
-export const VERSION = '0.7.0';
+export const VERSION = '1.0.0';
 
 /**
  * The command line.

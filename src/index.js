@@ -28,6 +28,7 @@ export { normalizeStream, PROBLEM } from './events/normalize.js';
 export { trackEvent, EVENT_SOURCE } from './events/event.js';
 export { waybill, waybillBook, MOVEMENT } from './events/waybill.js';
 export { notice } from './events/notice.js';
+export { splitTrips, tripsByCar, tripsForCar } from './events/carTrip.js';
 export { routeChange, CHANGE } from './events/diversion.js';
 
 export { tariff, freeTimeFor, describeTariff } from './tariff/tariff.js';
@@ -49,6 +50,9 @@ export { exclusionRegistry } from './exclusions/registry.js';
 export { isEligible, eligibleExclusions, explainRefusal } from './exclusions/eligibility.js';
 export { relieveSpan, reliefSummary } from './exclusions/apply.js';
 
+export { lease, selectLease, LEASE_KIND } from './equipment/lease.js';
+export { scaleTicket, billableWeight, WEIGHING } from './equipment/scaleTicket.js';
+export { trackOccupancy, occupancyByDay } from './site/capacity.js';
 export { assessCar, assessmentTotal } from './assessment/assess.js';
 export { assessMonth, assessmentsFor, monthTotal, consigneesIn } from './assessment/runMonth.js';
 export { recomputeForClaim, summariseRecompute } from './assessment/recompute.js';
@@ -63,12 +67,13 @@ export { matchPlacements } from './bunching/grouping.js';
 export { bunchingRelief } from './bunching/relief.js';
 
 export { assessStorage, LOAD_STATE } from './storage/storageCharge.js';
+export { reclaim, reclaimAll, reclaimTerms, RECLAIM_BASIS } from './storage/reclaim.js';
 export { hireBook, hireCharge, HIRE_BASIS } from './storage/perDiem.js';
 export { serviceBook, chargeService, SERVICE_KIND } from './storage/ancillary.js';
 
 export { switchOrder, SWITCH_KIND } from './switching/switchOrder.js';
 export { switchTariff, chargeSwitches } from './switching/switchCharge.js';
-export { interchange, responsibleCarrier } from './switching/interchange.js';
+export { interchange, responsibleCarrier, INTERCHANGE_STATUS } from './switching/interchange.js';
 
 export { invoice, INVOICE_STATUS, withStatus } from './invoice/invoice.js';
 export { buildInvoice, creditMemoLine } from './invoice/build.js';
@@ -97,6 +102,7 @@ export { exceptionReport, EXCEPTION } from './reporting/exceptions.js';
 export { assessmentKpis, reliefKpis } from './reporting/kpi.js';
 export { dwellSummary, fromDetentions } from './reporting/dwell.js';
 export { buildRegister, registerText } from './reporting/register.js';
+export { periodSeries, direction, movements, DIRECTION } from './reporting/trend.js';
 export { reconcile as reconcileCarrier, VERDICT } from './reporting/reconciliation.js';
 
 export { auditTrail, ACTION } from './audit/trail.js';
